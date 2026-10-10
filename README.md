@@ -1,6 +1,6 @@
 # lenox.fyi
 
-Blog posts, presentations, podcasts, and other things...
+Blog posts, and other things...
 
 
 # Development
@@ -17,7 +17,7 @@ docker run --rm --volume="$PWD/site:/blog" $(docker build -q .) /blog
 
 # License
 
-The content of the site (blog posts, presentation slides, etc.) are licensed as [Creative Commons CC BY 4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
+The content of the site (blog posts, etc.) are licensed as [Creative Commons CC BY 4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
 
 The code powering the site is licensed as:
 
