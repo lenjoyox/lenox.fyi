@@ -46,7 +46,7 @@ jobs:
 
     if: >-
       ${{
-        github.repository == 'nikeorever/lenox.fyi'
+        github.repository == 'lenjoyox/lenox.fyi'
         && github.ref == 'refs/heads/trunk'
         && github.event_name != 'pull_request'
       }}
