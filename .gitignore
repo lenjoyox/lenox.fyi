@@ -1,0 +1,6 @@
+/.gradle
+/.idea
+/.kotlin
+/build
+/node_modules
+/site/out

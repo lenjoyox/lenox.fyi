@@ -1,0 +1,12 @@
+/.editorconfig
+/.git
+/.gitignore
+/.github
+/.gradle
+/.idea
+/.kotlin
+/build
+/node_modules
+/site
+/LICENSE.txt
+/README.md

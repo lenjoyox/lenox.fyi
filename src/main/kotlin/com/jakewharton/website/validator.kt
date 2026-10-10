@@ -1,0 +1,113 @@
+package com.jakewharton.website
+
+import com.jakewharton.website.ValidationProblem.MalformedCodeBlock
+import com.jakewharton.website.ValidationProblem.MalformedLink
+import com.jakewharton.website.ValidationProblem.UnreachableLink
+import java.io.Closeable
+import java.io.IOException
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.commonmark.node.AbstractVisitor
+import org.commonmark.node.FencedCodeBlock
+import org.commonmark.node.Link
+
+sealed interface ValidationProblem {
+	enum class Level {
+		Error,
+		Warning,
+	}
+
+	val message: String
+	val level: Level
+
+	data class MalformedLink(override val message: String) : ValidationProblem {
+		override val level get() = Level.Error
+	}
+	data class UnreachableLink(override val message: String) : ValidationProblem {
+		override val level get() = Level.Warning
+	}
+	data class MalformedCodeBlock(override val message: String) : ValidationProblem {
+		override val level get() = Level.Error
+	}
+}
+
+private const val CodeBlockStartChars = "@+- "
+
+internal class SiteValidator(
+	private val validateLinks: Boolean,
+) : Closeable {
+	private val httpClient = OkHttpClient.Builder()
+		.build()
+
+	fun validate(site: Site): List<ValidationProblem> = buildList {
+		for (post in site.posts) {
+			if (post.externalLink != null) {
+				checkUrl(post.externalLink.url) { failure ->
+					this += UnreachableLink("Post '${post.slug}' external link: $failure")
+				}
+			}
+			post.content.accept(
+				object : AbstractVisitor() {
+					override fun visit(fencedCodeBlock: FencedCodeBlock) {
+						super.visit(fencedCodeBlock)
+
+						if (fencedCodeBlock.info == "diff") {
+							for (line in fencedCodeBlock.literal.lines()) {
+								if (line.isNotEmpty() && line.first() !in CodeBlockStartChars) {
+									this@buildList += MalformedCodeBlock(
+										"Post '${post.slug}' diff code block lines must start with one of '$CodeBlockStartChars'. Found: $line")
+								}
+							}
+						}
+					}
+
+					override fun visit(link: Link) {
+						super.visit(link)
+
+						val destination = link.destination
+						if (destination.startsWith("/")) {
+							// TODO validate relative link
+						} else if (destination.startsWith("#")) {
+							// TODO validate anchor link
+						} else if (destination.startsWith("mailto:")) {
+							// TODO validate email address?
+						} else {
+							val url = destination.toHttpUrlOrNull()
+							if (url == null) {
+								val linkText = link.firstChild.toString()
+								this@buildList += MalformedLink("Post '${post.slug}' link '$linkText' malformed/invalid: $destination")
+							} else {
+								checkUrl(url) { failure ->
+									this@buildList += UnreachableLink("Post '${post.slug}' link '$url': $failure")
+								}
+							}
+						}
+					}
+				},
+			)
+		}
+	}
+
+	private fun checkUrl(url: HttpUrl, onFailure: (failure: String) -> Unit) {
+		if (!validateLinks) return
+
+		val response = try {
+			httpClient.newCall(Request(url, method = "HEAD")).execute()
+		} catch (e: IOException) {
+			onFailure(e.message!!)
+			return
+		}
+		response.use {
+			if (!it.isSuccessful) {
+				onFailure("HTTP ${response.code}")
+			}
+		}
+	}
+
+	override fun close() {
+		httpClient.dispatcher.executorService.shutdown()
+		httpClient.connectionPool.evictAll()
+	}
+}

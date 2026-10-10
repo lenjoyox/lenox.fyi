@@ -1,0 +1,45 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+
+buildscript {
+	dependencies {
+		classpath(libs.kotlinGradlePlugin)
+	}
+	repositories {
+		mavenCentral()
+	}
+}
+
+apply plugin: 'org.jetbrains.kotlin.jvm'
+apply plugin: 'application'
+
+application {
+	mainClass = 'com.jakewharton.website.Main'
+}
+
+dependencies {
+	implementation(libs.commonmark.core)
+	implementation(libs.commonmark.ext.footnotes)
+	implementation(libs.commonmark.ext.headingAnchor)
+	implementation(libs.commonmark.ext.strikethrough)
+	implementation(libs.commonmark.ext.tables)
+	implementation(libs.snakeyaml)
+	implementation(libs.liqp)
+	implementation(libs.clikt)
+	implementation(libs.commonsText)
+	implementation(libs.okhttp)
+
+	testImplementation(libs.junit)
+	testImplementation(libs.assertk)
+}
+
+tasks.withType(JavaCompile).configureEach {
+	sourceCompatibility = '11'
+	targetCompatibility = '11'
+}
+
+tasks.withType(KotlinJvmCompile).configureEach {
+	compilerOptions {
+		jvmTarget = JvmTarget.JVM_11
+	}
+}
