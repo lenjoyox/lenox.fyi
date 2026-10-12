@@ -1,14 +1,14 @@
 ---
-title: "JVM 的 InvokeDynamic 指令"
+title: "JVM invokedynamic：字符串连接与动态调用点"
 
 tags:
-- Bytecode
-- JVM
+  - Bytecode
+  - JVM
 ---
 
-#### [Kotlin(1.4.20)](https://kotlinlang.org/docs/reference/whatsnew1420.html)
+## [Kotlin（1.4.20）](https://kotlinlang.org/docs/reference/whatsnew1420.html)
 
-**1.4.20** 版本的Kotlin已经于上个月正式释出，在本次更新中，有一个 **实验性(Experimental)** 的性能优化包含在其中：**Kotlin 1.4.20 can compile string concatenations into dynamic invocations on JVM 9+ targets**。字符串连接将会以新的方式实现，这样可以提高性能。在了解新方式之前，我们先了解一下9以下的JVM字节码：
+**1.4.20** 版本的 Kotlin 已经于上个月正式释出。在本次更新中，有一个 **实验性（Experimental）** 的性能优化包含在其中：**Kotlin 1.4.20 can compile string concatenations into dynamic invocations on JVM 9+ targets**。字符串连接将会以新的方式实现，这样可以提高性能。在了解新方式之前，我们先了解一下 9 以下的 JVM 字节码：
 
 首先我们定义一个Kotlin文件：FileSuffixAppender.kt，这个文件包含一些可以给文件名添加一些常用后缀的函数。
 
@@ -20,7 +20,7 @@ package cn.nikeo.kotlin
 fun appendKotlin(fileName: String): String = "$fileName.kt"
 ```
 
-此时我们将jvmTarget切换到1.8：
+此时我们将 `jvmTarget` 切换到 1.8：
 
 ```kotlin
 //build.gradle.kts
@@ -34,9 +34,9 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 编译完成后，我们查看以下这个文件对应的字节码：
 
-```shell
-$ ./gradlew clean compileKotlin
-$ javap -c build/classes/kotlin/main/cn/nikeo/kotlin/FileSuffixAppenderKt.class
+```bash
+./gradlew clean compileKotlin
+javap -c build/classes/kotlin/main/cn/nikeo/kotlin/FileSuffixAppenderKt.class
 Compiled from "FileSuffixAppender.kt"
 public final class cn.nikeo.kotlin.FileSuffixAppenderKt {
   public static final java.lang.String appendKotlin(java.lang.String);
@@ -56,9 +56,9 @@ public final class cn.nikeo.kotlin.FileSuffixAppenderKt {
 }
 ```
 
-由此我们可以的了解到在 **jvmTarget < 9** 的编译器（kotlinc）下，字符串连接底层使用的是 `java.lang.StringBuilder`。
+由此我们可以了解到，在 **jvmTarget < 9** 的编译器（kotlinc）下，字符串连接底层使用的是 `java.lang.StringBuilder`。
 
-现在我们将jvmTarget切换到9,并且根据文档添加一些编译器参数：
+现在我们将 `jvmTarget` 切换到 9，并且根据文档添加一些编译器参数：
 
 To enable `invokedynamic` string concatenation, add the `-Xstring-concat` compiler option with one of the following values:
 
@@ -81,9 +81,9 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 编译完成后，我们查看以下这个文件对应的字节码：
 
-```shell
-$ ./gradlew clean compileKotlin
-$ javap -c build/classes/kotlin/main/cn/nikeo/kotlin/FileSuffixAppenderKt.class
+```bash
+./gradlew clean compileKotlin
+javap -c build/classes/kotlin/main/cn/nikeo/kotlin/FileSuffixAppenderKt.class
 Compiled from "FileSuffixAppender.kt"
 public final class cn.nikeo.kotlin.FileSuffixAppenderKt {
   public static final java.lang.String appendKotlin(java.lang.String);
@@ -100,9 +100,9 @@ public final class cn.nikeo.kotlin.FileSuffixAppenderKt {
 
 由此我们可以的了解到在 **jvmTarget >= 9** 的编译器（kotlinc）下，字符串连接是使用 `invokedynamic` 指令调用一个新的方法而完成。
 
-#### Java
+## Java
 
-同样的，我们定义一个Java版本的 `FileSuffixAppender`：
+同样地，我们定义一个 Java 版本的 `FileSuffixAppender`：
 
 ```java
 // cn.nikeo.java.FileSuffixAppender.java
@@ -129,9 +129,9 @@ tasks.withType<JavaCompile> {
 
 编译完成后，我们查看以下这个类对应的字节码：
 
-```shell
-$ ./gradlew clean compileJava
-$ javap -c build/classes/java/main/cn/nikeo/java/FileSuffixAppender.class
+```bash
+./gradlew clean compileJava
+javap -c build/classes/java/main/cn/nikeo/java/FileSuffixAppender.class
 Compiled from "FileSuffixAppender.java"
 public class cn.nikeo.java.FileSuffixAppender {
   public cn.nikeo.java.FileSuffixAppender();
@@ -156,7 +156,7 @@ public class cn.nikeo.java.FileSuffixAppender {
 
 由此我们可以的了解到在 **sourceCompatibility/targetCompatibility < 9** 的编译器（javac）下，字符串连接底层使用的是 `java.lang.StringBuilder`。
 
-现在我们将sourceCompatibility/targetCompatibility切换到9：
+现在我们将 `sourceCompatibility`/`targetCompatibility` 切换到 9：
 
 ```kotlin
 // build.gradle.kts
@@ -169,9 +169,9 @@ tasks.withType<JavaCompile> {
 
 编译完成后，我们查看以下这个类对应的字节码：
 
-```shell
-$ ./gradlew clean compileJava
-$ javap -c build/classes/java/main/cn/nikeo/java/FileSuffixAppender.class
+```bash
+./gradlew clean compileJava
+javap -c build/classes/java/main/cn/nikeo/java/FileSuffixAppender.class
 Compiled from "FileSuffixAppender.java"
 public class cn.nikeo.java.FileSuffixAppender {
   public cn.nikeo.java.FileSuffixAppender();
@@ -190,13 +190,13 @@ public class cn.nikeo.java.FileSuffixAppender {
 
 由此我们可以的了解到在 **sourceCompatibility/targetCompatibility >= 9** 的编译器（javac）下，字符串连接是使用 `invokedynamic` 指令调用一个新的方法而完成。
 
-#### JVM9+ 真正执行字符串连接的新方法是什么？
+## JVM 9+ 真正执行字符串连接的新方法是什么？
 
 我们打印字节玛的更多信息以了解 **JVM9+** 真正执行字符串连接的新方法是什么：
 
-```shell
-$ ./gradlew clean compileJava
-$ javap -c -v build/classes/java/main/cn/nikeo/java/FileSuffixAppender.class
+```bash
+./gradlew clean compileJava
+javap -c -v build/classes/java/main/cn/nikeo/java/FileSuffixAppender.class
 Classfile /home/lenox/IdeaProjects/bytecode/build/classes/java/main/cn/nikeo/java/FileSuffixAppender.class
   Last modified Jan 15, 2021; size 861 bytes
   MD5 checksum 486d3c762ec4d8e0cd4205e86450f6d4
@@ -287,7 +287,7 @@ BootstrapMethods:
 
 看上去好像是 `java.lang.invoke.StringConcatFactory#makeConcatWithConstants`。
 
-#### invokedynamic
+## invokedynamic
 
 Java是一门 **静态类型语言(statically typed language)** ，它在 **编译期（compile time）** 执行类型检查，当一个程序编译时，一个类的所有类型信息，实例变量，方法参数，返回值等等都是可用的，Java编译器可以使用这些类型信息编译出 **强类型（strongly typing）** 的字节玛，从而可以在 **运行时（runtime）** 被JVM有效的执行。
 
@@ -305,7 +305,7 @@ public static int add(int x, int y) {
 
 编译后的字节玛：
 
-```txt
+```text
 public static int add(int, int);
     Code:
        0: iload_0
@@ -381,7 +381,7 @@ private static void sum(ClassWriter cw) {
 }
 ```
 
-```txt
+```text
   public int sum();
     descriptor: ()I
     flags: (0x0001) ACC_PUBLIC
@@ -465,8 +465,8 @@ private static void sum(ClassWriter cw) {
 
 查看完整编译后字节玛：
 
-```shell
-$ javap -c -v build/classes/java/main/cn/nikeo/java/BinaryIntegerCalculator
+```bash
+javap -c -v build/classes/java/main/cn/nikeo/java/BinaryIntegerCalculator
 Warning: File ./build/classes/java/main/cn/nikeo/java/BinaryIntegerCalculator.class does not contain class build/classes/java/main/cn/nikeo/java/BinaryIntegerCalculator
 Classfile /home/lenox/IdeaProjects/bytecode/build/classes/java/main/cn/nikeo/java/BinaryIntegerCalculator.class
   Last modified Jan 15, 2021; size 509 bytes
@@ -565,7 +565,7 @@ public static void testSum() {
 执行一次这个方法后
 Output:
 
-```txt
+```text
 IntegerOpsFactory#makeAdd
 102
 ```
@@ -592,7 +592,7 @@ public static void testSum() {
 执行一次这个方法后
 Output:
 
-```txt
+```text
 IntegerOpsFactory#makeAdd
 java.lang.reflect.InvocationTargetException
  at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
@@ -611,16 +611,16 @@ Caused by: java.lang.ArithmeticException: integer overflow
 
 当我们在正常情况下执行3次后，查看打印：
 
- ```txt
- IntegerOpsFactory#makeAdd
+```text
+IntegerOpsFactory#makeAdd
 102
 102
 102
- ```
+```
 
  我们注意到 _IntegerOpsFactory#makeAdd_这个只执行了一次，这是因为 **Bootstrap method** 只会被JVM链接 **调用点（call site）** 到 **方法实现** 一次，下次会直接调用方法实现。
 
-##### 源代码完整实现
+### 源代码完整实现
 
 ```java
 // cn.nikeo.java.BinaryIntegerCalculatorClassGenerator.java
@@ -780,7 +780,7 @@ public class BinaryIntegerCalculatorClassGenerator {
 }
 ```
 
-#### 相关链接
+## 相关链接
 
 - [https://docs.oracle.com/javase/specs/jvms/se11/html/](https://docs.oracle.com/javase/specs/jvms/se11/html/)
 - [https://docs.oracle.com/javase/7/docs/technotes/guides/vm/multiple-language-support.html#invokedynamic](https://docs.oracle.com/javase/7/docs/technotes/guides/vm/multiple-language-support.html#invokedynamic)

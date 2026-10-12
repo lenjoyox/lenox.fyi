@@ -1,20 +1,20 @@
 ---
-title: "sun.misc.Unsafe"
+title: "Java Unsafe：数组、堆外内存与字段偏移"
 
 tags:
-- Java
-- Unsafe
+  - Java
+  - Unsafe
 ---
 
-`Unsafe` 提供了一组比较低级(low-level)API允许Java程序员执行一些在Java层面上"不安全"的操作，比如说内存的分配和释放，"不安全"其实是相对的，如果一个Java程序员有一些C/C++开发经验的话，那这些"不安全"的API可以成为程序员窥探Java底层的工具。JDK中有大量的API借助了`Unsafe`, 比如:
+`Unsafe` 提供了一组比较低级（low-level）的 API，允许 Java 程序员执行一些在 Java 层面上“不安全”的操作，比如内存的分配和释放。“不安全”其实是相对的，如果一个 Java 程序员有一些 C/C++ 开发经验的话，那这些“不安全”的 API 可以成为程序员窥探 Java 底层的工具。JDK 中有大量的 API 借助了 `Unsafe`，比如：
 
 - 原子操作类(Atomic)
 - `java.util.concurrent.locks.LockSupport`
 - 支持并发操作的(`java.util.concurrent.ConcurrentHashMap`)集合
 
-#### 如何获取Unsafe对象
+## 如何获取 `Unsafe` 对象
 
-由于JDK的限制，`Unsafe`不允许在系统范围之外的类中通过`getUnsafe()`获取`Unsafe`对象。所以我们只能通过反射获取`theUnsafe`这个静态对象。
+由于 JDK 的限制，`Unsafe` 不允许在系统范围之外的类中通过 `getUnsafe()` 获取 `Unsafe` 对象。所以我们只能通过反射获取 `theUnsafe` 这个静态对象。
 
 ```java
 Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
@@ -22,7 +22,7 @@ theUnsafe.setAccessible(true);
 Unsafe unsafe = (Unsafe) theUnsafe.get(null);
 ```
 
-#### 数组操作
+## 数组操作
 
 - int arrayBaseOffset(Class<?> arrayClass)：返回给定数组类的存储分配中第一个元素的偏移量。
 - int arrayIndexScale(Class<?> arrayClass)：返回给定数组类的存储分配中寻址元素的比例因子。
@@ -45,7 +45,7 @@ int baseOffsetOfLongs = unsafe.arrayBaseOffset(longs.getClass());
 int indexScaleOfLongs = unsafe.arrayIndexScale(longs.getClass()); // Output: 8
 ```
 
-然后我们可以根据这个比例因子遍历出`longs`这个数组中的所有值：
+然后我们可以根据这个比例因子遍历出 `longs` 这个数组中的所有值：
 
 ```java
 for (int i = 0; i < longs.length; i++) {
@@ -60,13 +60,13 @@ for (int i = 0; i < longs.length; i++) {
 */
 ```
 
-我们也可以修改这个数组上某个索引对应的值，假如我们修改index=1对应的值30L为100L:
+我们也可以修改这个数组上某个索引对应的值，假如我们修改 `index = 1` 对应的值 `30L` 为 `100L`：
 
 ```java
 unsafe.putLong(longs, baseOffsetOfLongs + (long) indexScaleOfLongs * 1, 100L);
 ```
 
-其实一些*基本数据类型数组类*和*对象类型数组类*的存储分配中第一个元素的偏移量的值在相关VM中已经确定了，对于上述中`baseOffsetOfLongs`的值我们还可以通过另一种方法获取：
+其实一些*基本数据类型数组类*和*对象类型数组类*的存储分配中，第一个元素的偏移量在相关 VM 中已经确定了。对于上述 `baseOffsetOfLongs` 的值，我们还可以通过另一种方法获取：
 
 ```java
 int baseOffsetOfLongs = Unsafe.ARRAY_LONG_BASE_OFFSET;
@@ -102,9 +102,9 @@ int indexScaleOfLongs = Unsafe.ARRAY_LONG_INDEX_SCALE; // Output: 8
 | `double[]` | `Unsafe.ARRAY_DOUBLE_INDEX_SCALE` |
 | `Object[]` | `Unsafe.ARRAY_OBJECT_INDEX_SCALE` |
 
-#### 内存操作
+## 内存操作
 
-假如我们分配一块大小为1个字节内存块，这块内存的内容是未初始化的，如果分配成功，则返回一个指向这个内存的指针：
+假如我们分配一块大小为 1 个字节的内存块，这块内存的内容是未初始化的。如果分配成功，则返回一个指向这个内存的指针：
 
 ```java
 long ptr = unsafe.allocateMemory(1L);
@@ -155,7 +155,7 @@ After copy: 127
 unsafe.freeMemory(ptr);
 ```
 
-#### Field Offset
+## Field Offset
 
 假如我们定义一个`Circle`，如下所示：
 
@@ -175,7 +175,7 @@ public class Circle {
 
 ```java
 long offsetOfRadius = unsafe.objectFieldOffset(Circle.class.getField("radius"));
-System.out.println(offsetOfRadius); // Output:16
+System.out.println(offsetOfRadius); // Output: 16
 ```
 
 在我的Hotspot VM环境下，offset为16，这是因为`Circle`对象的布局如下所示：
@@ -211,10 +211,10 @@ double pi = unsafe.getDouble(
         unsafe.staticFieldBase(piField),
         unsafe.staticFieldOffset(piField)
 );
-System.out.println(pi); //Output:3.141592653589793
+System.out.println(pi); // Output: 3.141592653589793
 ```
 
-#### 原子操作
+## 原子操作
 
 - compareAndSwapInt
 - compareAndSwapLong
@@ -227,7 +227,7 @@ System.out.println(pi); //Output:3.141592653589793
 - getAndSetLong
 - getAndSetObject
 
-#### get/put
+## `get`/`put`
 
 在*数组操作*,*内存操作*和*Field offset*的描述中，我们其实已经介绍了get*()/put*()操作，我们整理一下：
 

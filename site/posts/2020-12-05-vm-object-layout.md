@@ -1,32 +1,32 @@
 ---
-title: "Object Layout"
+title: "JVM 与 ART 对象内存布局及 JOL 分析"
 
 tags:
-- Align
-- Gap
-- VM
+  - Align
+  - Gap
+  - VM
 ---
 
-#### Heap
+## Heap
 
-程序在执行期间，JVM(Java Virtual Machine)提供了两种类型的运行时数据区（Run-Time Data Areas）供程序使用：
+程序在执行期间，JVM（Java Virtual Machine）提供了两种类型的运行时数据区（Run-Time Data Areas）供程序使用：
 
- 1. 全局数据区：随JVM的启动（start-up）而创建，随JVM的退出（exit）而销毁。
- 2. 线程数据区：随线程的创建（create）而创建，随线程的退出（exit）而销毁。
+1. 全局数据区：随 JVM 的启动（start-up）而创建，随 JVM 的退出（exit）而销毁。
+2. 线程数据区：随线程的创建（create）而创建，随线程的退出（exit）而销毁。
 
-堆（Heap）随VM的启动而创建，所以它属于全局数据区，由于是全局数据区，所以它可以被所有的JVM线程共享，我们平时常用的类和数组的实例都是从堆（Heap）上分配（allocate）的，有分配就有释放（deallocated），与C/C++需要程序员自己管理内存不同的是，JVM使用GC(garbage collector) 来自动管理内存。
+堆（Heap）随 VM 的启动而创建，所以它属于全局数据区。由于是全局数据区，所以它可以被所有的 JVM 线程共享。我们平时常用的类和数组的实例都是从堆（Heap）上分配（allocate）的，有分配就有释放（deallocated）。与 C/C++ 需要程序员自己管理内存不同的是，JVM 使用 GC（garbage collector）来自动管理内存。
 
-堆（Heap）的大小可以是固定的，也可以按需扩大，如果不需要更多的空间，也可以进行收缩。如果JVM无法提供更多的堆空间，则JVM将抛出`java.lang.OutOfMemoryError`。
+堆（Heap）的大小可以是固定的，也可以按需扩大；如果不需要更多的空间，也可以进行收缩。如果 JVM 无法提供更多的堆空间，则 JVM 将抛出 `java.lang.OutOfMemoryError`。
 
-#### Object Layout
+## Object Layout
 
 当我们在堆上分配一块内存区域，然后在这个区域上去创建一个对象后，这个对象肯定是有大小的，那这个对象的大小是怎么计算的，它是怎么布局的，我们研究一下这个问题。
 
-如果我们使用的是JVM，我们可以使用[JOL](https://github.com/openjdk/jol)，它可以分析JVMs上的对象布局信息，并且它比一些基于Hprof的分析工具更佳准确。
+如果我们使用的是 JVM，我们可以使用 [JOL](https://github.com/openjdk/jol)，它可以分析 JVM 上的对象布局信息，并且它比一些基于 Hprof 的分析工具更加准确。
 
-我们以 `java.util.HashMap` 为例，查看以下JOL(internals)的分析结果：
+我们以 `java.util.HashMap` 为例，查看一下 JOL（internals）的分析结果：
 
-```shell
+```text
 # Running 64-bit HotSpot VM.
 # Using compressed oop with 3-bit shift.
 # Using compressed klass with 3-bit shift.
@@ -54,11 +54,11 @@ Instance size: 48 bytes
 Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
 ```
 
-从上面我们可以了解到一个对象基本由三部分构成：Header, Fields, Gap(Optional)：
+从上面我们可以了解到，一个对象基本由三部分构成：Header、Fields、Gap（Optional）：
 
-- Headers：Header的大小并不固定，对于HotSpot VM，它可以是8/12/16字节大小（这里是12字节）。Header包含两部分：_markword_（对象的元信息），_classword_（类引用），在32位/64位的模式下，Markword占用4/8个字节，Classword仅仅是个引用，因此它可以在64位模式下被压缩，这也是造成Header的大小不固定的直接原因。
-- Fields: 包含当前类及父类的所有属性。
-- Gap：这是一块无用的内存空间，由于对象需要被对齐（aligned）导致内存浪费，这些内存成为对象之间的间距。
+- Header：Header 的大小并不固定。对于 HotSpot VM，它可以是 8/12/16 字节大小（这里是 12 字节）。Header 包含两部分：*markword*（对象的元信息）、*classword*（类引用）。在 32 位/64 位的模式下，Markword 占用 4/8 个字节；Classword 仅仅是个引用，因此它可以在 64 位模式下被压缩，这也是造成 Header 大小不固定的直接原因。
+- Fields：包含当前类及父类的所有属性。
+- Gap：这是一块无用的内存空间，由于对象需要被对齐（aligned）而导致内存浪费，这些内存成为对象之间的间距。
 
 对于Header的大小，JOL是通过"猜测"的方法计算出来。JOL定义了一个只有一个属性的类(`org.openjdk.jol.vm.Experiments$HeaderClass`)，注意它不能继承其他有属性的父类：
 
@@ -78,7 +78,7 @@ class Experiments {
 
 然后通过 `sun.misc.Unsafe#objectFieldOffset(Field)` 方法获取 `b1` 这个Field的Offset，由于只有`b1`一个属性，则它的Offset就是Header的大小，我们可以通过JOL查看HeaderClass的布局信息（可以观察_OFFSET_和_SIZE_的值 ）：
 
-```shell
+```text
 ...
 org.openjdk.jol.vm.Experiments$HeaderClass object internals:
  OFFSET  SIZE      TYPE DESCRIPTION                               VALUE
@@ -91,9 +91,9 @@ Instance size: 16 bytes
 Space losses: 0 bytes internal + 3 bytes external = 3 bytes total
 ```
 
-上面提到Gap是由于对象的对齐（aligned）产生的，通常对象按照8个字节对齐，在JOL的输出信息中的最后一行（Space losses），它的值就是计算这些间距所占用的内存大小。对齐（aligned）可以按照下面这种方式理解：
+上面提到 Gap 是由于对象的对齐（aligned）产生的，通常对象按照 8 个字节对齐。在 JOL 的输出信息中的最后一行（Space losses），它的值就是计算这些间距所占用的内存大小。对齐（aligned）可以按照下面这种方式理解：
 
-```txt
+```text
 G: Gap
 
     OFFSET      SIZE
@@ -113,15 +113,15 @@ G   15          1
 Space losses: (2+2) bytes internal + 1 bytes external = 5 bytes total
 ```
 
-所以一个对象的大小 = Size(Header) + Size(Fields) + Size(Gap)
+所以一个对象的大小 = `Size(Header) + Size(Fields) + Size(Gap)`。
 
-##### Fields在内存中的排列顺序
+### Fields 在内存中的排列顺序
 
-- 前N个字节用于存储父类中所有Fields。
-- 当Field被插入的时候，根据他们的大小对齐：比如`long`以8个字节对齐，`boolean`以1个字节对齐，对齐过程中会产生间距。
-- 插入顺序为：基本数据类型->引用类型。
+- 前 N 个字节用于存储父类中所有 Fields。
+- 当 Field 被插入的时候，根据它们的大小对齐：比如 `long` 以 8 个字节对齐，`boolean` 以 1 个字节对齐，对齐过程中会产生间距。
+- 插入顺序为：基本数据类型 -> 引用类型。
 
-```shell
+```text
 # Running 64-bit HotSpot VM.
 # Using compressed oop with 3-bit shift.
 # Using compressed klass with 3-bit shift.
@@ -163,9 +163,9 @@ Instance size: 96 bytes
 Space losses: 4 bytes internal + 4 bytes external = 8 bytes total
 ```
 
-#### Dalvik/ART runtime
+## Dalvik/ART runtime
 
-由于JOL只能运行在JVMs，所以在Android（Dalvik/ART runtime）中，我们无法直接使用JOL,但我们可以根据JOL的原理简单的进行计算。
+由于 JOL 只能运行在 JVM 上，所以在 Android（Dalvik/ART runtime）中，我们无法直接使用 JOL，但我们可以根据 JOL 的原理简单地进行计算。
 
 假如我们定义了一个 `School.java`，我们想要知道这个类的对象的大小：
 
@@ -279,7 +279,7 @@ class MemoryActivity : AppCompatActivity() {
 
 运行后如下打印(格式化后)：
 
-```shell
+```text
 2021-01-19 20:48:40.660 19030-19030/cn.nikeo.app I/MemoryActivity:
 
     (public java.lang.String cn.nikeo.app.School.name, 8 )
@@ -293,7 +293,7 @@ class MemoryActivity : AppCompatActivity() {
 
 可以发现在当前Android VM中，对象的Header的大小为8个字节。从每个字段的Offset我们可以得到它的布局信息：
 
-```txt
+```text
                OFFSET  SIZE
     header:    0       8
       name:    8       4
@@ -315,7 +315,7 @@ Space losses: 0 bytes internal + 6 bytes external = 6 bytes total
 
 我们发现这个工具计算出的大小（Shallow Size）为26个字节，小于我们的32个字节，但我们可以发现，我们正好多处6个字节，而这6个字节正好是GAP，所以 **Android Profile** 可能并未计算 external GAP的大小，当然这只是猜测。
 
-#### Link
+## 相关链接
 
 - [https://shipilev.net/jvm/objects-inside-out/](https://shipilev.net/jvm/objects-inside-out/)
 - [https://shipilev.net/blog/2014/heapdump-is-a-lie/](https://shipilev.net/blog/2014/heapdump-is-a-lie/)

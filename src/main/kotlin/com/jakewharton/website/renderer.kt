@@ -74,7 +74,6 @@ internal class SiteRenderer(
 		outputDir.deleteRecursively()
 
 		copyRecursively(rootDir, rootDir.resolve("static"), outputDir)
-		copyRecursively(rootDir, rootDir.resolve("_redirects"), outputDir)
 
 		renderHtml(rootDir.resolve("index.html"), null, null, siteData, outputDir.resolve("index.html"))
 		renderHtml(rootDir.resolve("atom.xml"), null, null, siteData, outputDir.resolve("atom.xml"))

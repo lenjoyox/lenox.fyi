@@ -1,15 +1,15 @@
 ---
-title: "从 Rust 构建的二进制文件中移除本地敏感信息"
+title: "Rust 二进制构建中的本地路径脱敏"
 
 tags:
-- Rust
+  - Rust
 ---
 
-当我们使用命令行:
+当我们使用命令行：
 
-`$ cargo build --release --target aarch64-linux-android`
+`cargo build --release --target aarch64-linux-android`
 
-或使用 [org.mozilla.rust-android-gradle.rust-android](https://github.com/mozilla/rust-android-gradle) gradle plugin:
+或者使用 [org.mozilla.rust-android-gradle.rust-android](https://github.com/mozilla/rust-android-gradle) Gradle plugin：
 
 ```groovy
 plugins {
@@ -35,14 +35,15 @@ tasks.named("clean", Delete) {
 }
 ```
 
-构建一个可以在 Android 平台上运行的动态链接库后，我们可以使用任何的二进制查看工具查看生成的 so, 会有很多明文的字符串, 例如：
+构建一个可以在 Android 平台上运行的动态链接库后，我们可以使用任何二进制查看工具查看生成的 `.so`，会有很多明文的字符串，例如：
 
-```txt
+```text
 error: entered unreachable code/Users/enjoy/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_json-1.0.138/src/de.rsstruct
 ```
 
-关键的问题是里面会包含我们的设备用户名: `/Users/enjoy`, 具体的内容我们可以在终端里输入: `$ echo $HOME` 获取.
-这是不可接受的，在一些安全的领域，这会泄漏我们的敏感信息，如何解决呢:
+关键的问题是里面会包含我们的设备用户名：`/Users/enjoy`，具体的内容我们可以在终端里输入 `echo $HOME` 获取。
+
+这是不可接受的。在一些安全的领域，这会泄漏我们的敏感信息，如何解决呢：
 
 ```diff
  cargo {
@@ -58,7 +59,8 @@ error: entered unreachable code/Users/enjoy/.cargo/registry/src/index.crates.io-
  }
 ```
 
-如上所示，我们可以通过 `--remap-path-prefix` 解决， 通过上面的配置，`/Users/enjoy` 会被替换成 `/ArcticFox`, 从而移除敏感信息。
+如上所示，我们可以通过 `--remap-path-prefix` 解决。通过上面的配置，`/Users/enjoy` 会被替换成 `/ArcticFox`，从而移除敏感信息。
 
-#### Link
--[buildrustflags](https://doc.rust-lang.org/cargo/reference/config.html#buildrustflags)
+## 相关链接
+
+- [buildrustflags](https://doc.rust-lang.org/cargo/reference/config.html#buildrustflags)

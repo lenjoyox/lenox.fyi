@@ -1,18 +1,18 @@
 ---
-title: "Kotlin Generics"
+title: "Kotlin 泛型：型变、类型投影与类型擦除"
 
 tags:
-- Kotlin
-- Generics
-- Contravariance
-- Covariant
+  - Kotlin
+  - Generics
+  - Contravariance
+  - Covariant
 ---
 
-> 这篇文章讨论一下Kotlin中的泛型
+> 这篇文章讨论一下 Kotlin 中的泛型。
 
-### declaration-site variance
+## declaration-site variance
 
-在Java中，`Collection<String>` 是 `Collection<? extends Object>` 的子类，因为该类型发生了协变(covariant)，根据PECS原则，此类型作为Producer只能生产数据。对于下面这个类：
+在 Java 中，`Collection<String>` 是 `Collection<? extends Object>` 的子类，因为该类型发生了协变（covariant）。根据 PECS 原则，此类型作为 Producer 只能生产数据。对于下面这个类：
 
 ```java
 interface Producer<T> {
@@ -20,13 +20,13 @@ interface Producer<T> {
 }
 ```
 
-这个类只有一个方法，它只能生产数据，并不能消耗数据，所以 `Producer<String>` 应该是 `Producer<Object>` 的子类，但Java编译器不知道，而且没有办法向Java编译器解释这种行为，所以Java禁止了它。
+这个类只有一个方法，它只能生产数据，并不能消耗数据，所以 `Producer<String>` 应该是 `Producer<Object>` 的子类，但 Java 编译器不知道，而且没有办法向 Java 编译器解释这种行为，所以 Java 禁止了它。
 
-但是在Kotlin中，可以向Kotlin编译器解释这种行为，这被称为：**declaration-site variance**。
+但是在 Kotlin 中，可以向 Kotlin 编译器解释这种行为，这被称为 **declaration-site variance**。
 
-#### variance annotation - out修饰符
+### Variance annotation：`out` 修饰符
 
-我们可以对 `Producer` 的类型参数（type parameter）T进行注释，以确保仅从 `Producer<T>` 的 `produce` 方法返回（产生）该参数，并且永不使用它。为此我们提供 `out` 修饰符（**variance annotation**）：
+我们可以对 `Producer` 的类型参数（type parameter）`T` 进行注解，以确保仅从 `Producer<T>` 的 `produce` 方法返回（产生）该参数，并且永不使用它。为此我们提供 `out` 修饰符（**variance annotation**）：
 
 ```kotlin
 interface Producer<out T> {
@@ -45,11 +45,11 @@ val stringProducer = object : Producer<String> {
 val anyProducer: Producer<Any> = stringProducer
 ```
 
-#### variance annotation - in修饰符
+### Variance annotation：`in` 修饰符
 
 相对于 `out` 修饰符使类型参数（type parameter）发生协变(covariant)， `in` 修饰符使类型参数（type parameter）发生逆变(contravariance)，我们可以对 `Consumer` 的类型参数（type parameter）T进行 `in` 注释，以确保它只能被消耗而不能产生。这样我们可以将 `Consumer` 视为T的消费者而不是生产者。
 
-```kotin
+```kotlin
 interface Consumer<in T> {
     fun consume(t: T)
 }
@@ -70,12 +70,12 @@ stringConsumer.consume("string consumer")
 
 也就是说: **Consumer in, Producer out**
 
-### Type projections
+## Type projections
 
-* `Array<out String>` 对应Java中的 `Array<? extends String>`。
-* `Array<in String>` 对应Java中的 `Array<? super String>`。
+- `Array<out String>` 对应 Java 中的 `Array<? extends String>`。
+- `Array<in String>` 对应 Java 中的 `Array<? super String>`。
 
-### Generic constraints
+## Generic constraints
 
 上边界（Upper bounds）是泛型限制中最常见的限制类型，泛型默认的上边界是 `Any?` ，并且只能有一个上边界：
 `<T: Number>`。如果同一个类型参数需要一个以上的上限，则需要单独的 `where` 子句：
@@ -90,19 +90,19 @@ fun <T> copyWhenGreater(list: List<T>, threshold: T): List<String>
 
 传递的类型必须同时满足where子句的所有条件。在上面的示例中，T类型必须同时实现CharSequence和Comparable。
 
-### Type erasure
+## Type erasure
 
 在泛型声明中，Kotlin仅仅在编译时（compile time）执行类型安全检查，而在运行时（runtime），泛型类型的实例不持有类型参数的实际任何信息（类型擦除），比如 `Comparable<String>` 实例在运行时会被擦除成 `Comparable<*>`。
 
 因此，编译器禁止 `comparable is Comparable<String>`。
 
-```txt
+```text
 Cannot check for instance of erased type: Comparable<String>
 ```
 
 并且类型转换（Type casts）在运行时（runtime）是*unchecked*的：`comparable as Comparable<String>`。
 
-```txt
+```text
 Unchecked cast: Comparable<T> to Comparable<String>
 ```
 

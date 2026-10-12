@@ -1,24 +1,24 @@
 ---
-title: "Flutter State Management"
+title: "Flutter InheritedModel 状态共享原理"
 
 tags:
-- Flutter
-- State Management
+  - Flutter
+  - State Management
 ---
 
->这篇文章是Flutter state management系列的一部分。讨论的是在Flutter中是如何原生支持状态管理，当然，这部分API可能比较low-level，但是pub.dev上一些受欢迎的状态管理库(比如 provider)的底层都是基于此，所以了解其实现原理相当重要，这也是这篇文章的重点。
+> 这篇文章是 Flutter state management 系列的一部分。讨论的是在 Flutter 中是如何原生支持状态管理，当然，这部分 API 可能比较 low-level，但是 pub.dev 上一些受欢迎的状态管理库（比如 provider）的底层都是基于此，所以了解其实现原理相当重要，这也是这篇文章的重点。
 
-### 前言
+## 前言
 
-作者原来从事Android开发，习惯了使用`findViewById`这种在命令式UI编程（imperative style of UI programming）环境下数据共享（Flutter中称作共享状态*shared state*）的方式，但Flutter采用的是声明式UI编程（declarative style of UI programming），没有习惯的 `findViewById` 或者 `Text.setText()`，所以转换原来的思维，用新的思想去考虑这种编程范式，寻找合适的状态管理模式。
+作者原来从事 Android 开发，习惯了使用 `findViewById` 这种在命令式 UI 编程（imperative style of UI programming）环境下数据共享（Flutter 中称作共享状态 *shared state*）的方式，但 Flutter 采用的是声明式 UI 编程（declarative style of UI programming），没有习惯的 `findViewById` 或者 `Text.setText()`，所以转换原来的思维，用新的思想去考虑这种编程范式，寻找合适的状态管理模式。
 
-### 状态
+## 状态
 
-*UI = f( state )*，这个有趣的公式的解释了为什么Flutter是声明式的，描述了 *state* 和 *ui* 之间的关系，这表示Flutter会构建其用户界面以反映应用的当前状态。Flutter将状态分为两类：暂时状态（Ephemeral state）和 App状态（App state），前者往往只存在与单一控件中，随控件的销毁而回收，不需要与其他控件共享其状态，这不需要使用状态管理技术；后者与前者相反，其往往可能需要在应用的多个部分之间共享，观察（订阅）/通知更新是常见的操作，比如说电商应用的购物车，在购物页面可以将需要购买的商品放入购物车中，在购物车页面可以进行删除商品，在支付页面需要计算购物车中的所有商品的价格，这都需要利用状态管理技术才能优雅的实现。
+*UI = f(state)*，这个有趣的公式解释了为什么 Flutter 是声明式的，描述了 *state* 和 *UI* 之间的关系，这表示 Flutter 会构建其用户界面以反映应用的当前状态。Flutter 将状态分为两类：暂时状态（Ephemeral state）和 App 状态（App state），前者往往只存在于单一控件中，随控件的销毁而回收，不需要与其他控件共享其状态，这不需要使用状态管理技术；后者与前者相反，其往往可能需要在应用的多个部分之间共享，观察（订阅）/通知更新是常见的操作。比如说电商应用的购物车，在购物页面可以将需要购买的商品放入购物车中，在购物车页面可以删除商品，在支付页面需要计算购物车中所有商品的价格，这都需要利用状态管理技术才能优雅地实现。
 
-### 简单用法
+## 简单用法
 
-在这里，我们举一个比较简单例子来说明`InheritedModel`是如何使用的，然后从用法了解其底层实现原理。我们将利用Flutter 默认的Application项目，但是我们修改其`AppBar`中 `title`的来源：从原来的从构造器传入修改为从父控件（这里指 `InheritedModel`）中获取，因为`InheritedModel`间接继承于`Widget`，所以它其实就是一个`Widet`，可以用来构建UI tree中的一个`Element`。这里，我们将`title`存入新创建的`InheritedModel`的子类`MyModel`中，这样所有的`children`都可以获取到这个`title`，在这里，这个`title`只用于`AppBar`。
+在这里，我们举一个比较简单的例子来说明 `InheritedModel` 是如何使用的，然后从用法了解其底层实现原理。我们将利用 Flutter 默认的 Application 项目，但是修改其 `AppBar` 中 `title` 的来源：从原来的由构造器传入，修改为从父控件（这里指 `InheritedModel`）中获取。因为 `InheritedModel` 间接继承于 `Widget`，所以它其实就是一个 `Widget`，可以用来构建 UI tree 中的一个 `Element`。这里，我们将 `title` 存入新创建的 `InheritedModel` 子类 `MyModel` 中，这样所有的 `children` 都可以获取到这个 `title`，在这里，这个 `title` 只用于 `AppBar`。
 
 ```dart
 class MyModel extends InheritedModel<String> {
@@ -28,7 +28,7 @@ class MyModel extends InheritedModel<String> {
   /// AppBar title
   final String title;
 
- static MyModel of(BuildContext context) {
+  static MyModel of(BuildContext context) {
     return InheritedModel.inheritFrom<MyModel>(context, aspect: null);
   }
 
@@ -77,7 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 ```
 
-#### 如何从 Child Widget 获取到 指定 Parent Widget?
+### 如何从 Child Widget 获取指定 Parent Widget？
 
 要使你需要共享的 *Parent Widget*能够被它的`Children`发现，你的 *Parent Widget*需要继承自`InheritedWidget`（当然，`InheritedModel` 也是继承自`InheritedWidget`），`InheritedWidget`的官方解释是*Base class for widgets that efficiently propagate information down the tree.*，那它是如何传播信息的呢？正向的思路不太容易知道，但是我们可以反向来，我们研究从子控件是如何获取上层控件反推，就可以发现其所以然。
 在子控件中是通过`MyModel.of(context)`这样一个 *model-specific  static of method* 获取`MyModel`的，看到这种方法定义，想必每个Flutter开发者都很面熟，的确，这种状态管理技术已经广泛的应用到Flutter framework中，例如`Theme.of(context)`，`MediaQuery.of(context)`，这应该算作是一种规范，应该是所有Flutter开发者都应该遵守的。
@@ -198,4 +198,4 @@ void _updateInheritance() {
 
 这样，`MyModel`下的所有`Children`都可以获取到`MyModel`这个*Ancestor*，貌似有点`findViewById`的味道。
 
-状态管理参考[Flutter 官方文档](https://flutter.dev/docs/development/data-and-backend/state-mgmt/intro)
+状态管理参考：[Flutter 官方文档](https://flutter.dev/docs/development/data-and-backend/state-mgmt/intro)

@@ -1,10 +1,10 @@
 ---
-title: "C语言中的静态库和共享库"
+title: "C 静态库与动态库的创建、链接与加载"
 
 tags:
-- C
-- 静态库
-- 共享库
+  - C
+  - 静态库
+  - 共享库
 ---
 
 ```bash
@@ -19,7 +19,7 @@ tags:
 4 directories, 3 files
 ```
 
-**shapes** 文件夹是一个平面图形计算库，可计算矩形，圆形的面积和周长。
+**shapes** 文件夹是一个平面图形计算库，可计算矩形、圆形的面积和周长。
 
 ```c
 // include/shapes.h
@@ -81,7 +81,7 @@ double calculateCirclePerimeter(Circle circle) {
 }
 ```
 
-**main** 文件夹是一个二进制可执行库，用于测试平面图形计算库
+**main** 文件夹是一个二进制可执行库，用于测试平面图形计算库。
 
 ```c
 // main.c
@@ -218,17 +218,17 @@ gcc -o main main.c -L ../shapes/ -l shapes -I ../shapes/include/
 运行可执行文件
 
 ```bash
-$ ./main
+./main
 Rectangle Area: 15.000000
 Rectangle Perimeter: 16.000000
 Circle Area: 50.265482
 Circle Perimeter: 25.132741
 ```
 
-查看可执行文件的动态链接库依赖关系以及它们的搜索路径
+查看可执行文件的动态链接库依赖关系以及它们的搜索路径：
 
 ```bash
-$ ldd ./main
+ldd ./main
     linux-vdso.so.1 (0x00007ffe598e8000)
     libc.so.6 => /lib64/libc.so.6 (0x00007f3cb171b000)
     /lib64/ld-linux-x86-64.so.2 (0x00007f3cb1914000)
@@ -270,16 +270,16 @@ export LD_LIBRARY_PATH=../shapes/
 ```
 
 {{< notice info >}}
-也可以在编译可执行文件的时候通过 `-Wl,-rpath` 参数直接指定运行库路径，这样就不需要额外添加动态链接库的搜索路径
+也可以在编译可执行文件的时候通过 `-Wl,-rpath` 参数直接指定运行库路径，这样就不需要额外添加动态链接库的搜索路径。
 
 ```bash
 gcc -o main main.c -I ../shapes/include/ -Wl,-rpath, ../shapes/libshapes.so
 ```
 
-查看可执行文件的动态链接库依赖关系以及它们的搜索路径
+查看可执行文件的动态链接库依赖关系以及它们的搜索路径：
 
 ```diff
- $ ldd ./main
+ ldd ./main
      linux-vdso.so.1 (0x00007ffd778ab000)
 +    ../shapes/libshapes.so (0x00007f1526be8000)
      libc.so.6 => /lib64/libc.so.6 (0x00007f15269f1000)
@@ -291,17 +291,17 @@ gcc -o main main.c -I ../shapes/include/ -Wl,-rpath, ../shapes/libshapes.so
 运行可执行文件
 
 ```bash
-$ ./main
+./main
 Rectangle Area: 15.000000
 Rectangle Perimeter: 16.000000
 Circle Area: 50.265482
 Circle Perimeter: 25.132741
 ```
 
-查看可执行文件的动态链接库依赖关系以及它们的搜索路径
+查看可执行文件的动态链接库依赖关系以及它们的搜索路径：
 
 ```diff
- $ ldd ./main
+ ldd ./main
      linux-vdso.so.1 (0x00007ffc98260000)
 +    libshapes.so => ../shapes/libshapes.so (0x00007f4f8efeb000)
      libc.so.6 => /lib64/libc.so.6 (0x00007f4f8edf4000)
@@ -311,7 +311,7 @@ Circle Perimeter: 25.132741
 运行可执行文件的同时打印动态链接库的搜索信息
 
 ```bash
-$ LD_DEBUG=libs ./main
+LD_DEBUG=libs ./main
     151250:     find library=libshapes.so [0]; searching
     151250:      search path=../shapes/glibc-hwcaps/x86-64-v3:../shapes/glibc-hwcaps/x86-64-v2:../shapes                (LD_LIBRARY_PATH)
     151250:       trying file=../shapes/glibc-hwcaps/x86-64-v3/libshapes.so
@@ -408,10 +408,10 @@ gcc -o main main.c -L ../shapes/ -l shapes -I ../shapes/include/
  1 directory, 2 files
 ```
 
-查看可执行文件的动态链接库依赖关系以及它们的搜索路径
+查看可执行文件的动态链接库依赖关系以及它们的搜索路径：
 
 ```diff
- $ ldd main
+ ldd main
      linux-vdso.so.1 (0x00007ffc24b27000)
 +    libshapes.so => ../shapes/libshapes.so (0x00007f7350c14000)
      libc.so.6 => /lib64/libc.so.6 (0x00007f7350a1d000)

@@ -1,20 +1,20 @@
 ---
-title: "IPC"
+title: "Android IPC：AIDL、Messenger 与 Binder 通信原理"
 
 tags:
-- Android
-- AIDL
-- Messenger
-- Binder
+  - Android
+  - AIDL
+  - Messenger
+  - Binder
 ---
 
-在Android中可以通过两种方式实现进程间通信，一种是使用 `Messenger`，另一种是使用 **AIDL**，当然这两种方式都是基于 **Binder**，不同之处在于`Messenger`使用 `Handler`进行线程安全的消息处理，所以不需要在Service端处理多线程(multithreading)，所以AIDL是 **并发IPC(concurrent IPC)**。
+在 Android 中可以通过两种方式实现进程间通信，一种是使用 `Messenger`，另一种是使用 **AIDL**。当然，这两种方式都是基于 **Binder**，不同之处在于 `Messenger` 使用 `Handler` 进行线程安全的消息处理，所以不需要在 Service 端处理多线程（multithreading），而 AIDL 是 **并发 IPC（concurrent IPC）**。
 
-#### AIDL
+## AIDL
 
-- 支持AIDL文件中所有的代码注释（除了 `import` 或 `package` 语句之前的注释）
+- 支持 AIDL 文件中所有的代码注释（除了 `import` 或 `package` 语句之前的注释）
 
- ```java
+```java
  // AIDLService.aidl
 package cn.nikeo.app;
 
@@ -66,7 +66,7 @@ public interface AIDLService extends android.os.IInterface
 
 ```
 
-- 对于一些自定义的AIDL-generated接口类型或自定义的parcelable类型，如果要在其他AIDL文件中引用它，即使是同包下，也需要主动 `import` 该类型。
+- 对于一些自定义的 AIDL-generated 接口类型或自定义的 Parcelable 类型，如果要在其他 AIDL 文件中引用它，即使是同包下，也需要主动 `import` 该类型。
 
 ```java
 // Runnable.aidl
@@ -103,7 +103,7 @@ interface AIDLService {
 }
 ```
 
-##### 支持的数据类型
+### 支持的数据类型
 
 - 除 `short` 之外的所有基本数据类型（`boolean`, `char`, `byte`, `int`, `long`, `float`, `double`）。
 
@@ -127,40 +127,40 @@ interface AIDLService {
 
 - `android.os.Parcelable`的实现类（如 `android.os.Bundle`）。
 
-   方向标记：必须是 `in`, `out` 或 `inout`，不可以省略。
+   方向标记：必须是 `in`、`out` 或 `inout`，不可以省略。
 
 - `java.util.List`。支持指定泛型参数类型（如`List<String>`），接收端实际接受到的具体类型是 `java.util.ArrayList`。
 
-   方向标记：必须是 `in`, `out` 或 `inout`，不可以省略。
+   方向标记：必须是 `in`、`out` 或 `inout`，不可以省略。
 
 - `java.util.Map`。不支持指定泛型参数类型（如`Map<String, String>`），接收端实际接受到的具体类型是 `java.util.HashMap`,推荐使用 `android.os.Bundle`。
 
-   方向标记：必须是 `in`, `out` 或 `inout`，不可以省略。
+   方向标记：必须是 `in`、`out` 或 `inout`，不可以省略。
 
 - 数组类型（如 `int[]`, `String[]`）。
 
-   方向标记：必须是 `in`, `out` 或 `inout`，不可以省略。
+   方向标记：必须是 `in`、`out` 或 `inout`，不可以省略。
 
-##### AIDL 接口方法
+### AIDL 接口方法
 
-- 方法可以携带0个或多个方法参数，返回 `void` 或一个值。
+- 方法可以携带 0 个或多个方法参数，返回 `void` 或一个值。
 - 可以定义 `java.lang.String` 或 `int` 类型的常量。
 
- ```java
-    const int VERSION = 1;
-    const String TAG = "TAG";
- ```
+```java
+const int VERSION = 1;
+const String TAG = "TAG";
+```
 
-- Nullable的参数或返回值可以注解 `@nullable`。
+- Nullable 的参数或返回值可以注解 `@nullable`。
 
- ```java
-    @nullable
-    String nullableType(@nullable String name);
- ```
+```java
+@nullable
+String nullableType(@nullable String name);
+```
 
-##### C/S双向通信
+### C/S 双向通信
 
-###### AIDL协议文件
+#### AIDL 协议文件
 
 ```java
 // Messenger.aidl
@@ -197,7 +197,7 @@ interface Service {
 }
 ```
 
-###### Client
+#### Client
 
 ```kotlin
 package cn.nikeo.app
@@ -280,9 +280,9 @@ class Client : AppCompatActivity() {
 }
 ```
 
-###### Server
+#### Server
 
-注意到在 `saveRect` 的方法中在写入SharedPreferences的时候添加了并发锁，防止多线程相关问题。
+注意到在 `saveRect` 的方法中，在写入 `SharedPreferences` 的时候添加了并发锁，防止多线程相关问题。
 
 ```kotlin
 package cn.nikeo.app
@@ -327,9 +327,9 @@ class Server : Service() {
         }
     }
 }
- ```
+```
 
-###### AndroidManifest配置
+#### AndroidManifest 配置
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -360,9 +360,9 @@ class Server : Service() {
 </manifest>
 ```
 
-当我们在Client多线程发送11次 `saveRect` 命令的时候，监测Client端(cn.nikeo.app(7997))进程，打印如下：
+当我们在 Client 多线程发送 11 次 `saveRect` 命令的时候，监测 Client 端（`cn.nikeo.app(7997)`）进程，打印如下：
 
-```txt
+```text
 2021-01-12 22:32:31.461 7997-8049/cn.nikeo.app I/IPC: "
                 Client
                 Process: 7997
@@ -431,9 +431,9 @@ class Server : Service() {
                 Send a message( saveRect( Rect(left: 5, top: 5, right: 100, bottom: 100) ) ) from the client.
 ```
 
-监测Server端(cn.nikeo.app:server(8022))进程，打印如下：
+监测 Server 端（`cn.nikeo.app:server(8022)`）进程，打印如下：
 
-```txt
+```text
 2021-01-12 22:32:32.284 8022-8042/cn.nikeo.app I/IPC: "
                 Server
                 Process: 8022
@@ -502,11 +502,11 @@ class Server : Service() {
                 Receive a message( Rect(left: 4, top: 4, right: 100, bottom: 100) ) from the client. the number of threads in a blocked state: 0
 ```
 
-##### 通信原理（框架层）
+### 通信原理（框架层）
 
-从上面的 **C/S双向通信** 可以得到一个基本的通信流程：
+从上面的 **C/S 双向通信** 可以得到一个基本的通信流程：
 
-```txt
+```text
  -----------                                                  -----------
 |Server Side|(Binder Thread)                                 |Client Side| (Any Thread)
  -----------                                                  -----------
@@ -518,9 +518,9 @@ onTransact()                                                     transact()
  saveRect()                                                      saveRect()
 ```
 
-当Client进程与Server进程处于连接状态的时候，双端会拿到用于通信的 `IBinder`对象，这个对象描述了与远程对象通信的协议，Client拿到的实际上是一个 `BinderProxy`，而Server实际上是自定义的 `Service.Stub`，其实它是一个 `Binder`。
+当 Client 进程与 Server 进程处于连接状态的时候，双端会拿到用于通信的 `IBinder` 对象，这个对象描述了与远程对象通信的协议。Client 拿到的实际上是一个 `BinderProxy`，而 Server 实际上是自定义的 `Service.Stub`，其实它是一个 `Binder`。
 
-我们以 `saveRect` 为例，当Client发送消息的时候，实际使用的 `Service.Stub.Proxy` 发送，这个代理类持有一个用于通信的 `IBinder`（`BinderProxy`），当编组（Marshalling）完要发送的数据对象(`data`)和用于接受消息的回复对象后(`reply`)后，然后使用 `IBinder`（`BinderProxy`）通过transact()将这些数据发送给Server。这个 `BinderProxy` 是一个**native IBinder**的代理，他由 **native**管理，负责将编组的数据传输给底层。
+我们以 `saveRect` 为例。当 Client 发送消息的时候，实际使用 `Service.Stub.Proxy` 发送。这个代理类持有一个用于通信的 `IBinder`（`BinderProxy`）；当编组（Marshalling）完要发送的数据对象（`data`）和用于接收消息的回复对象（`reply`）后，使用 `IBinder`（`BinderProxy`）通过 `transact()` 将这些数据发送给 Server。这个 `BinderProxy` 是一个 **native IBinder** 的代理，它由 **native** 管理，负责将编组的数据传输给底层。
 
 ```java
 // android.os.BinderProxy.java
@@ -552,9 +552,9 @@ public final class BinderProxy implements IBinder {
 }
 ```
 
-现在底层接受到了编组后数据，现在需要将这个数据发送给Server进程，这里不详细讨论Binder的底层IPC通信原理，这时候我们将目光转到Server端。
+现在底层接收到了编组后的数据，需要将这个数据发送给 Server 进程。这里不详细讨论 Binder 的底层 IPC 通信原理，这时候我们将目光转到 Server 端。
 
-前面提到，相较于Client使用 `BinderProxy`作为具体的 `IBinder`，Server则使用 `Binder` 作为具体的 `IBinder`.当Server进程接收到来自Client进程的消息后，底层会调用该 `Binder`对象的 `execTransact` 方法：
+前面提到，相较于 Client 使用 `BinderProxy` 作为具体的 `IBinder`，Server 则使用 `Binder` 作为具体的 `IBinder`。当 Server 进程接收到来自 Client 进程的消息后，底层会调用该 `Binder` 对象的 `execTransact` 方法：
 
 ```java
 // android.os.Binder.java
@@ -607,13 +607,13 @@ public class Binder implements IBinder {
 }
 ```
 
-最终调用 `Binder`的 `onTransact`，而 `Service.Stub` 这个具体的 `Binder` 对 `onTransact`进行了 `override`，目的就是根据这个方法的第一个参数 `code`，将消息分派给对应的接受者去处理( `android.os.Parcel` -> `android.os.Parcelable`)。当处理完后，回复Client处理结果( `reply.writeNoException()` )。
+最终调用 `Binder` 的 `onTransact`，而 `Service.Stub` 这个具体的 `Binder` 对 `onTransact` 进行了 `override`，目的就是根据这个方法的第一个参数 `code`，将消息分派给对应的接收者去处理（`android.os.Parcel` -> `android.os.Parcelable`）。当处理完后，回复 Client 处理结果（`reply.writeNoException()`）。
 
-需要特别注意的是，这一个完整的通信过程是 **同步** 完成的，这意味这只有Server处理完成后，Client的调用才会return，在return之前，调用处所在的线程一直处于阻塞状态，所以如果Client调用处是主线程，当Server端处理时间过长，会阻塞主线程，造成ANR。推荐在子线程进行IPC通信。
+需要特别注意的是，这一个完整的通信过程是**同步**完成的。这意味着只有 Server 处理完成后，Client 的调用才会 `return`；在 `return` 之前，调用处所在的线程一直处于阻塞状态。所以如果 Client 调用处是主线程，当 Server 端处理时间过长，会阻塞主线程，造成 ANR。推荐在子线程进行 IPC 通信。
 
-#### Messenger
+## Messenger
 
-理解了AIDL的整个通信流程后，`Messenger` 就跟容易理解了，它底层也是使用AIDL进行IPC通信，以下是[它使用的AIDL文件](// <https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/os/IMessenger.aidl)：>
+理解了 AIDL 的整个通信流程后，`Messenger` 就更容易理解了。它底层也是使用 AIDL 进行 IPC 通信，以下是[它使用的 AIDL 文件](https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/os/IMessenger.aidl)：
 
 ```java
 //android/os/IMessenger.aidl
