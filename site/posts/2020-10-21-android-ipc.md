@@ -10,7 +10,7 @@ tags:
 
 在 Android 中可以通过两种方式实现进程间通信，一种是使用 `Messenger`，另一种是使用 **AIDL**。当然，这两种方式都是基于 **Binder**，不同之处在于 `Messenger` 使用 `Handler` 进行线程安全的消息处理，所以不需要在 Service 端处理多线程（multithreading），而 AIDL 是 **并发 IPC（concurrent IPC）**。
 
-## AIDL
+### AIDL
 
 - 支持 AIDL 文件中所有的代码注释（除了 `import` 或 `package` 语句之前的注释）
 
@@ -103,7 +103,7 @@ interface AIDLService {
 }
 ```
 
-### 支持的数据类型
+#### 支持的数据类型
 
 - 除 `short` 之外的所有基本数据类型（`boolean`, `char`, `byte`, `int`, `long`, `float`, `double`）。
 
@@ -141,7 +141,7 @@ interface AIDLService {
 
    方向标记：必须是 `in`、`out` 或 `inout`，不可以省略。
 
-### AIDL 接口方法
+#### AIDL 接口方法
 
 - 方法可以携带 0 个或多个方法参数，返回 `void` 或一个值。
 - 可以定义 `java.lang.String` 或 `int` 类型的常量。
@@ -158,9 +158,9 @@ const String TAG = "TAG";
 String nullableType(@nullable String name);
 ```
 
-### C/S 双向通信
+#### C/S 双向通信
 
-#### AIDL 协议文件
+##### AIDL 协议文件
 
 ```java
 // Messenger.aidl
@@ -197,7 +197,7 @@ interface Service {
 }
 ```
 
-#### Client
+##### Client
 
 ```kotlin
 package cn.nikeo.app
@@ -280,7 +280,7 @@ class Client : AppCompatActivity() {
 }
 ```
 
-#### Server
+##### Server
 
 注意到在 `saveRect` 的方法中，在写入 `SharedPreferences` 的时候添加了并发锁，防止多线程相关问题。
 
@@ -329,7 +329,7 @@ class Server : Service() {
 }
 ```
 
-#### AndroidManifest 配置
+##### AndroidManifest 配置
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -502,7 +502,7 @@ class Server : Service() {
                 Receive a message( Rect(left: 4, top: 4, right: 100, bottom: 100) ) from the client. the number of threads in a blocked state: 0
 ```
 
-### 通信原理（框架层）
+#### 通信原理（框架层）
 
 从上面的 **C/S 双向通信** 可以得到一个基本的通信流程：
 
@@ -611,7 +611,7 @@ public class Binder implements IBinder {
 
 需要特别注意的是，这一个完整的通信过程是**同步**完成的。这意味着只有 Server 处理完成后，Client 的调用才会 `return`；在 `return` 之前，调用处所在的线程一直处于阻塞状态。所以如果 Client 调用处是主线程，当 Server 端处理时间过长，会阻塞主线程，造成 ANR。推荐在子线程进行 IPC 通信。
 
-## Messenger
+### Messenger
 
 理解了 AIDL 的整个通信流程后，`Messenger` 就更容易理解了。它底层也是使用 AIDL 进行 IPC 通信，以下是[它使用的 AIDL 文件](https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/os/IMessenger.aidl)：
 

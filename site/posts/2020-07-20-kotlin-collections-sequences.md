@@ -61,16 +61,16 @@ first Rectangle(color=RED)
 可见，*Sequence*完美的解决了上面提出的两个问题。
 前面我们提到，*Sequence*只要在执行*终端操作*的时候才会执行*中间操作*，那哪些是*终端操作*呢？其实可以触发`Iterator`执行的操作都是*终端操作*，如`toList`，`forEach`，`sumBy`，`count`等等。
 
-## 结论
+### 结论
 
 - 对于数量级比较小的集合，并且只有一到两个操作时，这两种容器并没有明显的性能差异。
 - 对于数量级大的集合，中间操作的执行和中间集合的创建都是非常昂贵的，推荐使用 *Sequence*。
 
-## Dart 语言中的集合
+### Dart 语言中的集合
 
  由于Flutter需要高性能的语言支持，Dart中的内置集合操作虽然没有Kotlin这么丰富，但是它的实现和*Sequence*的实现是同理的。作者基于Google的[dart-quiver](https://pub.dev/packages/quiver)发布了一个新的Package-[wedzera](https://pub.dev/packages/wedzera)，这个库借助Dart extension，为集合拓展了更加丰富，更加常用的操作，都是使用*Sequence*的设计思想，有性能保证。
 
-## Kotlin 中的惰性序列和 Dart 中的 Synchronous generator
+### Kotlin 中的惰性序列和 Dart 中的 Synchronous generator
 
 两者是很相通的东西，即使实现原理不一样，前者是利用*协程（Coroutine）*。 以下实现一个获取无限自然数的序列
 

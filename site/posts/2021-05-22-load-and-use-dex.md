@@ -6,9 +6,9 @@ tags:
   - Dex
 ---
 
-之前的一篇 [Post](https://nikeo.cn/posts/2021-05-02-dx-d8-r8/) 解释了一下如何使用 DX/D8/R8 去生成 Dex，这里我们讨论一下如何在运行中加载并使用 Dex。
+之前的一篇 [Post](https://lenox.fyi/dx-d8-r8/) 解释了一下如何使用 DX/D8/R8 去生成 Dex，这里我们讨论一下如何在运行中加载并使用 Dex。
 
-## Android 类加载机制
+### Android 类加载机制
 
 我们先简单梳理一下 Android 的类加载机制。类加载遵循**双亲委托机制**，在加载一个类的时候，类加载器首先检查这个类是否已经被自身加载；如果没有，则委托给 `parent` 父加载器加载，而不是让自身去加载。接着，`parent` 父加载器同样也会检查是否已经加载过这个类；如果加载过，则返回，否则继续委托给更上一级的 `parent` 父加载器去加载，直到达到链路的顶端。顶端的加载器如果加载失败，则逐级向下交给子加载器去加载，以此类推，直到最后才会交给自己去查找。
 
@@ -120,7 +120,7 @@ public class BaseDexClassLoader extends ClassLoader {
 **dex** 和 **odex** 区别：
 一个APK是一个程序压缩包，里面有个执行程序包含 dex 文件，ODEX优化就是把包里面的执行程序提取出来，就变成ODEX文件。因为你提取出来了，系统第一次启动的时候就不用去解压程序压缩包，少了一个解压的过程。这样的话系统启动就加快了。为什么说是第一次呢？是因为DEX版本的也只有第一次会解压执行程序到/data/dalvik-cache（针对 `PathClassLoader`）或者 `optimizedDirectory` (针对`DexClassLoader` ）目录，之后也是直接读取目录下的的dex文件，所以第二次启动就和正常的差不多了。当然这只是简单的理解，实际生成的 ODEX 还有一定的优化作用。ClassLoader 只能加载内部存储路径中的dex文件，所以这个路径必须为内部路径。
 
-## 将外部 Dex 加入默认类加载器
+### 将外部 Dex 加入默认类加载器
 
 我们希望使用默认的类加载器（`PathClassLoader`）就可以加载到外部 Dex 中的类，那我们就需要把我们的 Dex 路径直接添加到默认类加载器（`PathClassLoader`）的搜寻路径中。`PathClassLoader` 继承自 `BaseDexClassLoader`, 按照上述的双亲委托机制，实际的类加载过程在 `findClass` 方法里, 内部又是通过 `pathList.findClass` 查找类， `pathList` 的类型为 `DexPathList`
 

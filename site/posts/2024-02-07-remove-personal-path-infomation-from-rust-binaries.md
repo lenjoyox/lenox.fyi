@@ -61,6 +61,6 @@ error: entered unreachable code/Users/enjoy/.cargo/registry/src/index.crates.io-
 
 如上所示，我们可以通过 `--remap-path-prefix` 解决。通过上面的配置，`/Users/enjoy` 会被替换成 `/ArcticFox`，从而移除敏感信息。
 
-## 相关链接
+### 相关链接
 
 - [buildrustflags](https://doc.rust-lang.org/cargo/reference/config.html#buildrustflags)

@@ -12,7 +12,7 @@ tags:
 - `java.util.concurrent.locks.LockSupport`
 - 支持并发操作的(`java.util.concurrent.ConcurrentHashMap`)集合
 
-## 如何获取 `Unsafe` 对象
+### 如何获取 `Unsafe` 对象
 
 由于 JDK 的限制，`Unsafe` 不允许在系统范围之外的类中通过 `getUnsafe()` 获取 `Unsafe` 对象。所以我们只能通过反射获取 `theUnsafe` 这个静态对象。
 
@@ -22,7 +22,7 @@ theUnsafe.setAccessible(true);
 Unsafe unsafe = (Unsafe) theUnsafe.get(null);
 ```
 
-## 数组操作
+### 数组操作
 
 - int arrayBaseOffset(Class<?> arrayClass)：返回给定数组类的存储分配中第一个元素的偏移量。
 - int arrayIndexScale(Class<?> arrayClass)：返回给定数组类的存储分配中寻址元素的比例因子。
@@ -102,7 +102,7 @@ int indexScaleOfLongs = Unsafe.ARRAY_LONG_INDEX_SCALE; // Output: 8
 | `double[]` | `Unsafe.ARRAY_DOUBLE_INDEX_SCALE` |
 | `Object[]` | `Unsafe.ARRAY_OBJECT_INDEX_SCALE` |
 
-## 内存操作
+### 内存操作
 
 假如我们分配一块大小为 1 个字节的内存块，这块内存的内容是未初始化的。如果分配成功，则返回一个指向这个内存的指针：
 
@@ -155,7 +155,7 @@ After copy: 127
 unsafe.freeMemory(ptr);
 ```
 
-## Field Offset
+### Field Offset
 
 假如我们定义一个`Circle`，如下所示：
 
@@ -214,7 +214,7 @@ double pi = unsafe.getDouble(
 System.out.println(pi); // Output: 3.141592653589793
 ```
 
-## 原子操作
+### 原子操作
 
 - compareAndSwapInt
 - compareAndSwapLong
@@ -227,7 +227,7 @@ System.out.println(pi); // Output: 3.141592653589793
 - getAndSetLong
 - getAndSetObject
 
-## `get`/`put`
+### `get`/`put`
 
 在*数组操作*,*内存操作*和*Field offset*的描述中，我们其实已经介绍了get*()/put*()操作，我们整理一下：
 

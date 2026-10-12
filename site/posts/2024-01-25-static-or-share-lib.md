@@ -103,7 +103,7 @@ int main() {
 }
 ```
 
-## 创建平面图形计算库的静态链接库
+### 创建平面图形计算库的静态链接库
 
 进入平面图形计算库根路径
 
@@ -153,7 +153,7 @@ ar rcs libshapes.a shapes.o
  2 directories, 4 files
 ```
 
-## 创建平面图形计算库的动态链接库
+### 创建平面图形计算库的动态链接库
 
 进入平面图形计算库根路径
 
@@ -186,7 +186,7 @@ gcc -shared -o libshapes.so -fPIC shapes.c -I include/
  2 directories, 3 files
 ```
 
-## 使用静态链接库
+### 使用静态链接库
 
 进入二进制可执行库根路径
 
@@ -234,7 +234,7 @@ ldd ./main
     /lib64/ld-linux-x86-64.so.2 (0x00007f3cb1914000)
 ```
 
-## 使用动态链接库
+### 使用动态链接库
 
 进入二进制可执行库根路径
 
@@ -269,24 +269,23 @@ gcc -o main main.c -L ../shapes/ -l shapes -I ../shapes/include/
 export LD_LIBRARY_PATH=../shapes/
 ```
 
-{{< notice info >}}
-也可以在编译可执行文件的时候通过 `-Wl,-rpath` 参数直接指定运行库路径，这样就不需要额外添加动态链接库的搜索路径。
-
-```bash
-gcc -o main main.c -I ../shapes/include/ -Wl,-rpath, ../shapes/libshapes.so
-```
-
-查看可执行文件的动态链接库依赖关系以及它们的搜索路径：
-
-```diff
- ldd ./main
-     linux-vdso.so.1 (0x00007ffd778ab000)
-+    ../shapes/libshapes.so (0x00007f1526be8000)
-     libc.so.6 => /lib64/libc.so.6 (0x00007f15269f1000)
-     /lib64/ld-linux-x86-64.so.2 (0x00007f1526bef000)
-```
-
-{{< /notice >}}
+> **说明**
+>
+> 也可以在编译可执行文件的时候通过 `-Wl,-rpath` 参数直接指定运行库路径，这样就不需要额外添加动态链接库的搜索路径。
+>
+> ```bash
+> gcc -o main main.c -I ../shapes/include/ -Wl,-rpath, ../shapes/libshapes.so
+> ```
+>
+> 查看可执行文件的动态链接库依赖关系以及它们的搜索路径：
+>
+> ```diff
+>  ldd ./main
+>      linux-vdso.so.1 (0x00007ffd778ab000)
+> +    ../shapes/libshapes.so (0x00007f1526be8000)
+>      libc.so.6 => /lib64/libc.so.6 (0x00007f15269f1000)
+>      /lib64/ld-linux-x86-64.so.2 (0x00007f1526bef000)
+> ```
 
 运行可执行文件
 
@@ -359,9 +358,9 @@ Circle Perimeter: 25.132741
     151250:
 ```
 
-{{< notice question >}}
-当同名的动态链接库和静态连接库在同一目录时，会优先链接哪个？
-{{< /notice >}}
+> **问题**
+>
+> 当同名的动态链接库和静态连接库在同一目录时，会优先链接哪个？
 
 进入平面图形计算库根路径
 
@@ -418,6 +417,6 @@ gcc -o main main.c -L ../shapes/ -l shapes -I ../shapes/include/
      /lib64/ld-linux-x86-64.so.2 (0x00007f7350c1b000)
 ```
 
-{{< notice note >}}
-优先链接动态链接库
-{{< /notice >}}
+> **结论**
+>
+> 优先链接动态链接库

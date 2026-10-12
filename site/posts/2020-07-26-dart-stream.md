@@ -30,11 +30,11 @@ Stream<int> genAsync() async* {
 }
 ```
 
-## Cold Stream
+### Cold Stream
 
 `Stream` 类似于 `Iterable`，是一个冷流，这意味着上述的 *Asynchronous generator* 只有当 `Stream` 开始 `listen` 或 `await for` 的时候才会执行（*Synchronous generator* 只有当 `Iterable` 开始迭代的时候才会执行）。
 
-## await for
+### await for
 
 当我们需要从`Stream`获取值时，除了使用 [Stream API](https://dart.dev/guides/libraries/library-tour#stream)，还可以使用`async`和`async for`（*asynchronous for loop*）：
 
@@ -49,11 +49,11 @@ void forEachStream() async {
 该 *for 循环*直到 `Stream` *emit* 一个值时一直处于 *wait* 状态；当 `Stream` *emit* 一个值后，执行循环体并将 `value` 设置为 *emit* 的值；然后这样循环执行，直到 `Stream` 处于 *closed* 状态。
 *for 循环*的 `break` 或 `return` 将打破 *for 循环*并取消订阅流。
 
-## 如何创建 `Stream`
+### 如何创建 `Stream`
 
 除了使用*Asynchronous generator*， 还可以使用`StreamController`来创建`Stream`。`StreamController`可以创建两种类型的`Stream`：
 
-### 支持单次订阅的 `Stream`
+#### 支持单次订阅的 `Stream`
 
 ```dart
 final controller = StreamController<int>();
@@ -76,7 +76,7 @@ Bad state: Stream has already been listened to.
 #5      _RawReceivePortImpl._handleMessage (dart:isolate-patch/isolate_patch.dart:168:12)
 ```
 
-### 支持多次订阅的 `Stream`（*broadcast stream*）
+#### 支持多次订阅的 `Stream`（*broadcast stream*）
 
 ```dart
 final controller = StreamController<int>.broadcast();
@@ -93,12 +93,12 @@ controller.add(10);
 10
 ```
 
-## Async/Sync StreamController
+### Async/Sync StreamController
 
 当你创建一个`StreamController`的时候，有一个*Named Parameter*-`sync`来控制`StreamController`是*Sync*还是*Async*，*Sync StreamController*相比*Async StreamController*的唯一优势在于低延迟：当向`Stream`添加一个*event*的时候，*Async StreamController*会将这个*Event*包装成为`_DelayedEvent`，然后通过`scheduleMicrotask` 异步调度这个`_DelayedEvent`将其转发给*Subscriber*，所以会有一定的延迟；和*Async StreamController*相反，*Sync StreamController*会立刻将*event*转发给*Subscriber*，延迟只因程序的执行而产生，所以可以视为无延迟。
 **Note：官方推荐使用 non-sync 版本。**
 
-## StreamTransformer
+### StreamTransformer
 
 和`Iterable`一样，`Stream`也需要一些中间操作来丰富自己-如`Stream`中*events*的`map`，`filter`等等。当然，这些都已经存在于`Stream`的核心API中，但是我们可能还需要类似 `timestamp`（包装原始*event*，使其增加时间辍）等等这些拓展API，这时候需要我们自己拓展`Stream`。我们借助`Stream`的`transform`函数来完成*Source Stream*向*Target Stream*的转化。这里以[rxdart](https://pub.dev/packages/rxdart)中的`timestamp`拓展函数来演示：
 首先我们定义自己的`StreamTransformer`：
@@ -126,9 +126,9 @@ extension TimeStampExtension<T> on Stream<T> {
 }
 ```
 
-## 部分官方 API 介绍
+### 部分官方 API 介绍
 
-### expand
+#### expand
 
 将*Source Stream*中的每个*event*通过`convert`转换成多个元素序列然后*emit*给*Target Stream*：
 
@@ -159,7 +159,7 @@ map.keys.forEach(c.add);
 9
 ```
 
-### pipe
+#### pipe
 
 将当前`Stream`中的*events*通过管道发送给另一个`StreamConsumer`
 
@@ -182,7 +182,7 @@ sourceController.add('event from sourceController');
 event from sourceController
 ```
 
-## 受欢迎的 `Stream` 拓展库
+### 受欢迎的 `Stream` 拓展库
 
 - [rxdart](https://pub.dev/packages/rxdart)
 - [stream_transform](https://pub.dev/packages/stream_transform)

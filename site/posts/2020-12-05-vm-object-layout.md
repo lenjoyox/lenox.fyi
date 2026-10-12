@@ -7,7 +7,7 @@ tags:
   - VM
 ---
 
-## Heap
+### Heap
 
 程序在执行期间，JVM（Java Virtual Machine）提供了两种类型的运行时数据区（Run-Time Data Areas）供程序使用：
 
@@ -18,7 +18,7 @@ tags:
 
 堆（Heap）的大小可以是固定的，也可以按需扩大；如果不需要更多的空间，也可以进行收缩。如果 JVM 无法提供更多的堆空间，则 JVM 将抛出 `java.lang.OutOfMemoryError`。
 
-## Object Layout
+### Object Layout
 
 当我们在堆上分配一块内存区域，然后在这个区域上去创建一个对象后，这个对象肯定是有大小的，那这个对象的大小是怎么计算的，它是怎么布局的，我们研究一下这个问题。
 
@@ -115,7 +115,7 @@ Space losses: (2+2) bytes internal + 1 bytes external = 5 bytes total
 
 所以一个对象的大小 = `Size(Header) + Size(Fields) + Size(Gap)`。
 
-### Fields 在内存中的排列顺序
+#### Fields 在内存中的排列顺序
 
 - 前 N 个字节用于存储父类中所有 Fields。
 - 当 Field 被插入的时候，根据它们的大小对齐：比如 `long` 以 8 个字节对齐，`boolean` 以 1 个字节对齐，对齐过程中会产生间距。
@@ -163,7 +163,7 @@ Instance size: 96 bytes
 Space losses: 4 bytes internal + 4 bytes external = 8 bytes total
 ```
 
-## Dalvik/ART runtime
+### Dalvik/ART runtime
 
 由于 JOL 只能运行在 JVM 上，所以在 Android（Dalvik/ART runtime）中，我们无法直接使用 JOL，但我们可以根据 JOL 的原理简单地进行计算。
 
@@ -315,7 +315,7 @@ Space losses: 0 bytes internal + 6 bytes external = 6 bytes total
 
 我们发现这个工具计算出的大小（Shallow Size）为26个字节，小于我们的32个字节，但我们可以发现，我们正好多处6个字节，而这6个字节正好是GAP，所以 **Android Profile** 可能并未计算 external GAP的大小，当然这只是猜测。
 
-## 相关链接
+### 相关链接
 
 - [https://shipilev.net/jvm/objects-inside-out/](https://shipilev.net/jvm/objects-inside-out/)
 - [https://shipilev.net/blog/2014/heapdump-is-a-lie/](https://shipilev.net/blog/2014/heapdump-is-a-lie/)

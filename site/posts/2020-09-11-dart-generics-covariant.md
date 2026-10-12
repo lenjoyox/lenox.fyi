@@ -9,7 +9,7 @@ tags:
 
 > 这篇文章讨论一下 Dart 泛型中的协变（covariant）。
 
-## 与 Java 的不同之处
+### 与 Java 的不同之处
 
 熟悉 Java 的人都知道，泛型类型在 Java 中是不变（invariant）的，这意味着 `List<Cat>` 并不是 `List<Animal>` 的子类。比如以下代码在 Java 中会在编译期报错（`Cat` 是 `Animal` 的子类）：
 

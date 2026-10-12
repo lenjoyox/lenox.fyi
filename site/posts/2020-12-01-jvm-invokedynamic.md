@@ -6,7 +6,7 @@ tags:
   - JVM
 ---
 
-## [Kotlin（1.4.20）](https://kotlinlang.org/docs/reference/whatsnew1420.html)
+### [Kotlin（1.4.20）](https://kotlinlang.org/docs/reference/whatsnew1420.html)
 
 **1.4.20** 版本的 Kotlin 已经于上个月正式释出。在本次更新中，有一个 **实验性（Experimental）** 的性能优化包含在其中：**Kotlin 1.4.20 can compile string concatenations into dynamic invocations on JVM 9+ targets**。字符串连接将会以新的方式实现，这样可以提高性能。在了解新方式之前，我们先了解一下 9 以下的 JVM 字节码：
 
@@ -100,7 +100,7 @@ public final class cn.nikeo.kotlin.FileSuffixAppenderKt {
 
 由此我们可以的了解到在 **jvmTarget >= 9** 的编译器（kotlinc）下，字符串连接是使用 `invokedynamic` 指令调用一个新的方法而完成。
 
-## Java
+### Java
 
 同样地，我们定义一个 Java 版本的 `FileSuffixAppender`：
 
@@ -190,7 +190,7 @@ public class cn.nikeo.java.FileSuffixAppender {
 
 由此我们可以的了解到在 **sourceCompatibility/targetCompatibility >= 9** 的编译器（javac）下，字符串连接是使用 `invokedynamic` 指令调用一个新的方法而完成。
 
-## JVM 9+ 真正执行字符串连接的新方法是什么？
+### JVM 9+ 真正执行字符串连接的新方法是什么？
 
 我们打印字节玛的更多信息以了解 **JVM9+** 真正执行字符串连接的新方法是什么：
 
@@ -287,7 +287,7 @@ BootstrapMethods:
 
 看上去好像是 `java.lang.invoke.StringConcatFactory#makeConcatWithConstants`。
 
-## invokedynamic
+### invokedynamic
 
 Java是一门 **静态类型语言(statically typed language)** ，它在 **编译期（compile time）** 执行类型检查，当一个程序编译时，一个类的所有类型信息，实例变量，方法参数，返回值等等都是可用的，Java编译器可以使用这些类型信息编译出 **强类型（strongly typing）** 的字节玛，从而可以在 **运行时（runtime）** 被JVM有效的执行。
 
@@ -620,7 +620,7 @@ IntegerOpsFactory#makeAdd
 
  我们注意到 _IntegerOpsFactory#makeAdd_这个只执行了一次，这是因为 **Bootstrap method** 只会被JVM链接 **调用点（call site）** 到 **方法实现** 一次，下次会直接调用方法实现。
 
-### 源代码完整实现
+#### 源代码完整实现
 
 ```java
 // cn.nikeo.java.BinaryIntegerCalculatorClassGenerator.java
@@ -780,7 +780,7 @@ public class BinaryIntegerCalculatorClassGenerator {
 }
 ```
 
-## 相关链接
+### 相关链接
 
 - [https://docs.oracle.com/javase/specs/jvms/se11/html/](https://docs.oracle.com/javase/specs/jvms/se11/html/)
 - [https://docs.oracle.com/javase/7/docs/technotes/guides/vm/multiple-language-support.html#invokedynamic](https://docs.oracle.com/javase/7/docs/technotes/guides/vm/multiple-language-support.html#invokedynamic)

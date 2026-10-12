@@ -8,7 +8,7 @@ tags:
 
 > 这篇文章聊一下 Java 中的 `ClassLoader`。
 
-## 前言
+### 前言
 
 假如现在有一个 class file 叫做 `cn.nikeo.Square.class`，位于 `/home/lenox/IdeaProjects/kotlin-starter/` 目录下，如下所示：
 
@@ -38,9 +38,9 @@ public class Square {
 
 我现在需要加载并使用它，有以下几种方式。
 
-## 通过 classpath 加载类
+### 通过 classpath 加载类
 
-### Gradle
+#### Gradle
 
 如果你使用 Gradle，可以使用如下方式：
 
@@ -52,7 +52,7 @@ dependencies {
 }
 ```
 
-### `java -classpath`
+#### `java -classpath`
 
 在使用 `java` 执行 main class 文件的时候，添加 `-classpath /home/lenox/IdeaProjects/kotlin-starter` 选项，如：
 
@@ -64,7 +64,7 @@ java -Dfile.encoding=UTF-8 \
 
 其实这两种方式都是将 `/home/lenox/IdeaProjects/kotlin-starter` 添加到 classpath，此时你就可以使用 `/home/lenox/IdeaProjects/kotlin-starter` 下的 class files 了。
 
-### 查看 `java.class.path`
+#### 查看 `java.class.path`
 
 你可以通过 `System.getProperty("java.class.path")` 查看当前运行环境下所有的 classpath。比如：
 
@@ -102,7 +102,7 @@ java -Dfile.encoding=UTF-8 \
 /home/lenox/.local/share/JetBrains/Toolbox/apps/IDEA-U/ch-0/203.5981.155/lib/idea_rt.
 ```
 
-### 系统 `ClassLoader`
+#### 系统 `ClassLoader`
 
 现在你可以使用系统的 `ClassLoader` 去加载位于 `/home/lenox/IdeaProjects/kotlin-starter/` 目录下的 `cn.nikeo.Square.class` 了：
 
@@ -119,7 +119,7 @@ fun main() {
 }
 ```
 
-## 自定义 `ClassLoader`
+### 自定义 `ClassLoader`
 
 现在介绍第三种方式——自定义 `ClassLoader`。
 
@@ -157,17 +157,17 @@ fun main() {
 }
 ```
 
-## `ClassLoader` 简介
+### `ClassLoader` 简介
 
 `ClassLoader` 是用来将 Java 类加载到 JVM 中，Java 源代码经过 Java 编译器（`javac` 命令）编译成 Java 字节码文件后，该字节码文件被加载进 JVM 中解释执行。
 
 具体来说，该字节码文件由 `ClassLoader` 负责读取，然后将其转换成 `java.lang.Class` 类的一个实例（Java 类），然后我们可以通过 `getConstructor()` 和 `newInstance` 创建出该类的一个对象。
 
-## `ClassLoader` 分类
+### `ClassLoader` 分类
 
 总的来说有四类 `ClassLoader`。
 
-### Bootstrap class loader
+#### Bootstrap class loader
 
 这个 `ClassLoader` 主要用来加载 Java 的核心库，需要注意的是这个 `ClassLoader` 存在于 native，所以它并没有继承 `java.lang.ClassLoader`。
 
@@ -257,7 +257,7 @@ public class Launcher {
 /home/lenox/.sdkman/candidates/java/8.0.275.open-adpt/jre/classes
 ```
 
-### ExtClassLoader
+#### ExtClassLoader
 
 这个 `ClassLoader` 主要用来加载 Java 的拓展库，它是 `java.lang.ClassLoader` 的字类。
 
@@ -298,7 +298,7 @@ static class ExtClassLoader extends URLClassLoader {
 /usr/java/packages/lib/ext
 ```
 
-### AppClassLoader
+#### AppClassLoader
 
 这个 `ClassLoader` 主要根据 Java 类路径（CLASSPATH）用来加载 Java 类，它是 `java.lang.ClassLoader` 的字类。
 
@@ -494,11 +494,11 @@ public class Launcher {
 }
 ```
 
-### Custom ClassLoader
+#### Custom ClassLoader
 
 这个 `ClassLoader` 是用户根据实际需求自定义的 `ClassLoader`，如上面提到的 `LocalClassLoader`。
 
-## 双亲委派机制
+### 双亲委派机制
 
 按照 `java.lang.ClassLoader` 类的构造器，可以说明每个 `ClassLoader` 都有一个 Parent ClassLoader，当通过 `loadClass` 方法加载字节码文件的时候，会先代理给其 Parent ClassLoader，然后一层一层地传递。
 
@@ -561,7 +561,7 @@ AppClassLoader(Java) --> (findClass()) --> (defineClass())
 
 当我们使用 `ClassLoader.getSystemClassLoader()`（`AppClassLoader`）去 `loadClass()` 的时候，会先调用 `ExtClassLoader` 的 `loadClass()`，由于 `ExtClassLoader` 没有 `parent`，所以会使用 BootstrapClassLoader 去加载 class file，如果在引导类路径中没有找到 class file，则调用 `ExtClassLoader` 的 `findClass()` 去寻找，找到了就调用 `defineClass` 去将 class file 转化为 `java.lang.Class`；如果 `ExtClassLoader` 没有加载成功，则会向下继续调用 `AppClassLoader` 的 `findClass()` 去寻找，找到了就调用 `defineClass` 去将 class file 转化为 `java.lang.Class`；加载是个从上到下的过程。
 
-## `findLoadedClass`
+### `findLoadedClass`
 
 查找名称为 `name` 的已经被加载过的类，这样不用每次重新去加载：
 
@@ -575,7 +575,7 @@ try {
 }
 ```
 
-## `Class.forName`
+### `Class.forName`
 
 ```java
 public static Class<?> forName(String name, boolean initialize, ClassLoader loader)

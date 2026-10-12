@@ -19,7 +19,7 @@ class Cat extends Animal {}
 class Dog extends Animal {}
 ```
 
-## 协变（covariant）
+### 协变（covariant）
 
 首先我们查看一下 `Collection` 的 `addAll` 的方法签名：
 
@@ -39,7 +39,7 @@ void covariant(List<? extends Animal> items) {
 }
 ```
 
-## 逆变（contravariance）
+### 逆变（contravariance）
 
 `Collection<? super Dog>` 这种类型匹配所有泛型类型是 `Dog` 及其超类的集合类型，如 `Collection<Dog>` ， `Collection<Animal>` ， `Collection<Object>` 。一个很重要的点是，对于发生逆变(contravariance)的类型，我们既可以对其 *读（read）* 也可以对其 *写（write）* ，但是：读（read）的类型是 `Object` ，而不是 `Dog` ，因为我们并不知具体是 `Dog` ， `Animal` 还是 `Object` ，我们仅仅知道这些类的共同点，它们有一个共同的超类- `Object` ；写（write）的类型只支持 `Dog` 类型，因为我们并不知具体是 `Dog` ， `Animal` 还是 `Object` ，我们仅仅知道这些类的共同点，它们有一个子类- `Dog`。
 
@@ -50,7 +50,7 @@ void contravariance(List<? super Dog> items) {
 }
 ```
 
-## PECS
+### PECS
 
 这是 *Producer-Extends, Consumer-Super* 的缩写，表示从生产者里读（协变，covariant），写入到消费者（逆变，contravariance）。
 
