@@ -17,7 +17,9 @@ html {
 	height: 100%;
 }
 body {
+	position: relative;
 	min-height: 100%;
+	padding-bottom: 60px;
 	font-family: 'Merriweather Sans', sans-serif;
 	background-color: var(--background-color);
 	color: var(--foreground-color);
@@ -60,6 +62,27 @@ header {
 		margin: 0;
 		padding-left: 4px;
 	}
+}
+
+footer {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	padding: 20px;
+	text-align: center;
+	font-size: 12px;
+}
+
+footer a {
+	color: var(--signature-color);
+}
+
+#index footer a {
+	color: var(--header-link-color);
+}
+
+footer a:hover, footer a:focus, #index footer a:hover, #index footer a:focus {
+	color: var(--link-color);
 }
 
 #index header {
