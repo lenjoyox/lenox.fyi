@@ -19,7 +19,7 @@ html {
 body {
 	position: relative;
 	min-height: 100%;
-	padding-bottom: 60px;
+	padding-bottom: 90px;
 	font-family: 'Merriweather Sans', sans-serif;
 	background-color: var(--background-color);
 	color: var(--foreground-color);
@@ -68,12 +68,21 @@ footer {
 	position: absolute;
 	bottom: 0;
 	width: 100%;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 8px 16px;
 	padding: 20px;
 	text-align: center;
 	font-size: 12px;
 }
 
 footer a {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	white-space: nowrap;
 	color: var(--signature-color);
 }
 
