@@ -108,10 +108,31 @@ jobs:
         env:
           BAIDU_PUSH_URL: ${{ secrets.BAIDU_PUSH_URL }}
         run: |
+          # Never fail the (already completed) deploy, even if `grep` finds nothing.
+          set +e
           set -uo pipefail
 
           if [ -z "${BAIDU_PUSH_URL:-}" ]; then
             echo "::warning::BAIDU_PUSH_URL secret is not configured; skipping Baidu push."
+            exit 0
+          fi
+
+          # Baidu rejects `site` values that include a scheme (e.g. site=https://lenox.fyi
+          # returns {"error":400,"message":"site init fail"}). Normalize it to a bare
+          # domain; the token is still read verbatim from the secret.
+          push_url="$(printf '%s' "$BAIDU_PUSH_URL" | sed -E \
+            -e 's#([?&]site=)https?://#\1#' \
+            -e 's#([?&]site=)https?%3[Aa]%2[Ff]%2[Ff]#\1#' \
+            -e 's#([?&]site=[^&]*)/+#\1#')"
+          if [ "$push_url" != "$BAIDU_PUSH_URL" ]; then
+            echo "Normalized the site parameter in BAIDU_PUSH_URL to a bare domain."
+          fi
+          if ! printf '%s' "$push_url" | grep -qE '[?&]site=[^&]+'; then
+            echo "::warning::BAIDU_PUSH_URL is missing the site= parameter; skipping Baidu push."
+            exit 0
+          fi
+          if ! printf '%s' "$push_url" | grep -qE '[?&]token=[^&]+'; then
+            echo "::warning::BAIDU_PUSH_URL is missing the token= parameter; skipping Baidu push."
             exit 0
           fi
 
@@ -144,14 +165,27 @@ jobs:
             [ -e "$batch" ] || continue
             count="$(wc -l < "$batch" | tr -d ' ')"
             echo "Pushing $count URL(s) to Baidu…"
-            if ! response="$(curl -sS --fail-with-body --max-time 30 \
-                -H 'Content-Type: text/plain' \
-                --data-binary "@$batch" \
-                "$BAIDU_PUSH_URL")"; then
-              echo "::warning::Baidu push request failed for a batch of $count URL(s)."
+
+            # Capture the body even on non-2xx so Baidu's error message is visible.
+            resp_file="$(mktemp)"
+            http_code="$(curl -sS -o "$resp_file" -w '%{http_code}' --max-time 30 \
+              -H 'Content-Type: text/plain' \
+              --data-binary "@$batch" \
+              "$push_url")"
+            response="$(cat "$resp_file")"
+            rm -f "$resp_file"
+
+            if [ -z "$http_code" ] || [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+              echo "::warning::Baidu push failed (HTTP ${http_code:-000}): $response"
+              case "$response" in
+                *"site init fail"*)
+                  echo "::warning::Baidu requires site= to be a bare domain, e.g. site=lenox.fyi (no https://)."
+                  ;;
+              esac
               failed=1
               continue
             fi
+
             echo "Baidu response: $response"
             if printf '%s' "$response" | grep -q '"error"'; then
               echo "::warning::Baidu rejected a batch of $count URL(s): $response"
