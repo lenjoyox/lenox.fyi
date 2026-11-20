@@ -101,3 +101,69 @@ jobs:
             -e "ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
             out/ \
             "deploy@${ECS_HOST}:/var/www/site/"
+
+      # Runs only after a successful deploy above. All failures are downgraded to
+      # warnings so that indexing issues never turn a completed deploy red.
+      - name: Push URLs to Baidu
+        env:
+          BAIDU_PUSH_URL: ${{ secrets.BAIDU_PUSH_URL }}
+        run: |
+          set -uo pipefail
+
+          if [ -z "${BAIDU_PUSH_URL:-}" ]; then
+            echo "::warning::BAIDU_PUSH_URL secret is not configured; skipping Baidu push."
+            exit 0
+          fi
+
+          sitemap="out/sitemap.xml"
+          if [ ! -f "$sitemap" ]; then
+            echo "::warning::Sitemap not found at $sitemap; skipping Baidu push."
+            exit 0
+          fi
+
+          urls="$(mktemp)"
+          tmpdir="$(mktemp -d)"
+          trap 'rm -f "$urls"; rm -rf "$tmpdir"' EXIT
+
+          grep -oE '<loc>[^<]+</loc>' "$sitemap" \
+            | sed -E 's#</?loc>##g; s/^[[:space:]]+//; s/[[:space:]]+$//' \
+            | awk 'NF && !seen[$0]++' > "$urls"
+
+          total="$(wc -l < "$urls" | tr -d ' ')"
+          if [ "$total" -eq 0 ]; then
+            echo "::warning::No URLs found in $sitemap; skipping Baidu push."
+            exit 0
+          fi
+
+          batch_size=1000
+          split -l "$batch_size" -d "$urls" "$tmpdir/batch-"
+
+          failed=0
+          pushed=0
+          for batch in "$tmpdir"/batch-*; do
+            [ -e "$batch" ] || continue
+            count="$(wc -l < "$batch" | tr -d ' ')"
+            echo "Pushing $count URL(s) to Baidu…"
+            if ! response="$(curl -sS --fail-with-body --max-time 30 \
+                -H 'Content-Type: text/plain' \
+                --data-binary "@$batch" \
+                "$BAIDU_PUSH_URL")"; then
+              echo "::warning::Baidu push request failed for a batch of $count URL(s)."
+              failed=1
+              continue
+            fi
+            echo "Baidu response: $response"
+            if printf '%s' "$response" | grep -q '"error"'; then
+              echo "::warning::Baidu rejected a batch of $count URL(s): $response"
+              failed=1
+              continue
+            fi
+            pushed=$((pushed + count))
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "::warning::Some Baidu push batches failed; the deployment itself completed successfully."
+          else
+            echo "Pushed $pushed of $total URL(s) to Baidu successfully."
+          fi
+          exit 0

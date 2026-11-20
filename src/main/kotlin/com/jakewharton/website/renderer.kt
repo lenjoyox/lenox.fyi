@@ -77,6 +77,7 @@ internal class SiteRenderer(
 
 		renderHtml(rootDir.resolve("index.html"), null, null, siteData, outputDir.resolve("index.html"))
 		renderHtml(rootDir.resolve("atom.xml"), null, null, siteData, outputDir.resolve("atom.xml"))
+		renderHtml(rootDir.resolve("sitemap.xml"), null, null, siteData, outputDir.resolve("sitemap.xml"))
 
 		renderHtml(
 			rootDir.resolve("blog.html"),
